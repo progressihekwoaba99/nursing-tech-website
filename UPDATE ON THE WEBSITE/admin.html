@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .login-view {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .login-view.active {
+      display: flex;
+    }
+
+    .login-view:not(.active) {
+      display: none;
+    }
+
+    .login-container {
+      background: white;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-container h2 {
+      margin-bottom: 30px;
+      text-align: center;
+      color: #667eea;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 5px rgba(102, 126, 234, 0.1);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .btn:hover {
+      background: #5568d3;
+    }
+
+    #error-message {
+      color: #d32f2f;
+      margin-top: 15px;
+      text-align: center;
+      display: none;
+      padding: 10px;
+      background: #ffebee;
+      border-radius: 5px;
+    }
+
+    .admin-content {
+      display: none;
+      min-height: 100vh;
+      background: #f5f5f5;
+    }
+
+    .admin-content.active {
+      display: block;
+    }
+
+    .header {
+      background: #667eea;
+      color: white;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      margin: 0 0 10px 0;
+    }
+
+    .header p {
+      margin: 0;
+      opacity: 0.9;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+      padding: 10px 15px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+
+    .search-box {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .search-box h3 {
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .search-input-group {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .search-input-group input {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    .stat-box {
+      background: #e3f2fd;
+      padding: 15px;
+      border-radius: 5px;
+      color: #0056b3;
+      font-weight: 600;
+      margin-top: 15px;
+    }
+
+    #submissions-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .submission-card {
+      border: 1px solid #eee;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      background: #fafafa;
+    }
+
+    .submission-card h4 {
+      color: #667eea;
+      margin-bottom: 10px;
+    }
+
+    .submission-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      font-size: 14px;
+    }
+
+    .submission-field {
+      background: white;
+      padding: 10px;
+      border-radius: 3px;
+      border-left: 3px solid #667eea;
+    }
+
+    .submission-field strong {
+      display: block;
+      color: #667eea;
+      margin-bottom: 3px;
+      font-size: 12px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
+    @media (max-width: 768px) {
+      .search-input-group {
+        grid-template-columns: 1fr;
+      }
+
+      .header-controls {
+        flex-direction: column;
+      }
+
+      .submission-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN VIEW -->
+  <div class="login-view active">
+    <div class="login-container">
+      <h2>Admin Dashboard</h2>
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" required>
+        </div>
+        <button type="submit" class="btn">Login</button>
+        <div id="error-message"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADMIN DASHBOARD -->
+  <div class="admin-content">
+    <!-- Header -->
+    <div class="header">
+      <h1>Admin Dashboard</h1>
+      <p>Manage Service Submissions & Patient Records</p>
+      <div class="header-controls">
+        <button class="btn-secondary" onclick="showAllPatients()">View All Patients</button>
+        <button class="btn-secondary" onclick="exportToCSV()">Download CSV</button>
+        <button class="btn-secondary" onclick="deleteAllData()">Clear All Data</button>
+        <button class="btn-secondary" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+      <!-- Search Section -->
+      <div class="search-box">
+        <h3>Search Submissions</h3>
+        
+        <div>
+          <label>Filter by Name/Email/Phone</label>
+          <div class="search-input-group">
+            <input type="text" id="search-input" placeholder="Enter name, email, or phone..." onkeyup="filterByText()">
+            <button class="btn-secondary" onclick="clearTextSearch()">Clear</button>
+          </div>
+        </div>
+
+        <div style="margin-top: 20px;">
+          <label>Filter by Patient ID</label>
+          <div class="search-input-group">
+            <input type="text" id="patient-id-input" placeholder="Enter Patient ID..." onkeyup="filterByPatientId()">
+            <button class="btn-secondary" onclick="clearPatientIdSearch()">Clear</button>
+          </div>
+        </div>
+
+        <div class="stat-box">
+          <span id="submission-count">Total Submissions: 0</span>
+        </div>
+      </div>
+
+      <!-- Submissions Display -->
+      <div id="submissions-container">
+        <div class="empty-state">No submissions found</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT -->
+  <script>
+    // Configuration
+    const CONFIG = {
+      username: 'ihekwoaba',
+      password: 'progress124#'
+    };
+
+    // Global state
+    let allSubmissions = [];
+
+    // Check authentication on page load
+    window.addEventListener('load', initPage);
+
+    function initPage() {
+      if (sessionStorage.getItem('authenticated') === 'true') {
+        showAdminPanel();
+        loadAllSubmissions();
+      }
+    }
+
+    // Handle login
+    function handleLogin(event) {
+      event.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const errorEl = document.getElementById('error-message');
+
+      if (username === CONFIG.username && password === CONFIG.password) {
+        sessionStorage.setItem('authenticated', 'true');
+        errorEl.style.display = 'none';
+        showAdminPanel();
+        loadAllSubmissions();
+      } else {
+        errorEl.textContent = 'Invalid credentials. Please try again.';
+        errorEl.style.display = 'block';
+        document.getElementById('password').value = '';
+      }
+    }
+
+    // Show admin panel
+    function showAdminPanel() {
+      document.querySelector('.login-view').classList.remove('active');
+      document.querySelector('.admin-content').classList.add('active');
+    }
+
+    // Load all submissions
+    function loadAllSubmissions() {
+      allSubmissions = JSON.parse(localStorage.getItem('serviceSubmissions')) || [];
+      displaySubmissions(allSubmissions);
+      updateSubmissionCount(allSubmissions.length);
+    }
+
+    // Display submissions
+    function displaySubmissions(submissions) {
+      const container = document.getElementById('submissions-container');
+
+      if (submissions.length === 0) {
+        container.innerHTML = '<div class="empty-state">No submissions to display</div>';
+        return;
+      }
+
+      let html = '';
+      submissions.forEach(sub => {
+        html += `
+          <div class="submission-card">
+            <h4>${sub.firstName} ${sub.surname}</h4>
+            <div class="submission-grid">
+              <div class="submission-field"><strong>Patient ID:</strong> ${sub.patientId || 'N/A'}</div>
+              <div class="submission-field"><strong>Phone:</strong> ${sub.phone || 'N/A'}</div>
+              <div class="submission-field"><strong>Email:</strong> ${sub.email || 'N/A'}</div>
+              <div class="submission-field"><strong>Location:</strong> ${sub.location || 'N/A'}</div>
+              <div class="submission-field"><strong>Age:</strong> ${sub.age || 'N/A'}</div>
+              <div class="submission-field"><strong>Marital Status:</strong> ${sub.maritalStatus || 'N/A'}</div>
+                <div class="submission-field"><strong>Complaint:</strong> ${sub.complaint || 'N/A'}</div>
+                ${sub.voiceData ? `<div class="submission-field"><strong>Voice Message:</strong>
+                  <div style="margin-top:6px;"><audio controls src="${sub.voiceData}" style="width:100%;max-width:400px;"></audio>
+                  <div style="margin-top:6px;"><a href="${sub.voiceData}" download="voice-${sub.patientId || 'unknown'}.webm">Download</a></div></div></div>` : ''}
+              <div class="submission-field"><strong>Service:</strong> ${sub.service || 'N/A'}</div>
+              <div class="submission-field"><strong>Date Submitted:</strong> ${sub.date || 'N/A'}</div>
+              <div class="submission-field"><strong>Timestamp:</strong> ${sub.timestamp || 'N/A'}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // Filter by text
+    function filterByText() {
+      const searchTerm = document.getElementById('search-input').value.toLowerCase();
+      if (!searchTerm) {
+        loadAllSubmissions();
+        return;
+      }
+
+      const filtered = allSubmissions.filter(sub =>
+        sub.firstName.toLowerCase().includes(searchTerm) ||
+        sub.surname.toLowerCase().includes(searchTerm) ||
+        sub.email.toLowerCase().includes(searchTerm) ||
+        (sub.phone && sub.phone.includes(searchTerm))
+      );
+
+      displaySubmissions(filtered);
+      updateSubmissionCount(filtered.length);
+    }
+
+    // Clear text search
+    function clearTextSearch() {
+      document.getElementById('search-input').value = '';
+      loadAllSubmissions();
+    }
+
+    // Filter by patient ID
+    function filterByPatientId() {
+      const patientId = document.getElementById('patient-id-input').value.toUpperCase().trim();
+      if (!patientId) {
+        loadAllSubmissions();
+        return;
+      }
+
+      const filtered = allSubmissions.filter(sub => sub.patientId === patientId);
+      displaySubmissions(filtered);
+      updateSubmissionCount(filtered.length);
+    }
+
+    // Clear patient ID search
+    function clearPatientIdSearch() {
+      document.getElementById('patient-id-input').value = '';
+      loadAllSubmissions();
+    }
+
+    // Show all patients
+    function showAllPatients() {
+      const allPatients = JSON.parse(localStorage.getItem('patientRecords')) || [];
+
+      if (allPatients.length === 0) {
+        document.getElementById('submissions-container').innerHTML = '<div class="empty-state">No patient records found</div>';
+        return;
+      }
+
+      let html = '<h3 style="margin-bottom: 15px;">All Registered Patients (' + allPatients.length + ')</h3>';
+      html += '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;"><th style="padding: 12px; text-align: left;">Patient ID</th><th style="padding: 12px; text-align: left;">Name</th><th style="padding: 12px; text-align: left;">Phone</th><th style="padding: 12px; text-align: left;">Email</th><th style="padding: 12px; text-align: left;">Location</th></tr></thead><tbody>';
+
+      allPatients.forEach(p => {
+        html += `<tr style="border-bottom: 1px solid #eee; background: #fafafa;"><td style="padding: 12px;">${p.patientId}</td><td style="padding: 12px;">${p.firstName} ${p.surname}</td><td style="padding: 12px;">${p.phone}</td><td style="padding: 12px;">${p.email}</td><td style="padding: 12px;">${p.location}</td></tr>`;
+      });
+
+      html += '</tbody></table>';
+      document.getElementById('submissions-container').innerHTML = html;
+    }
+
+    // Export to CSV
+    function exportToCSV() {
+      if (allSubmissions.length === 0) {
+        alert('No data to export');
+        return;
+      }
+
+      const keys = Object.keys(allSubmissions[0]);
+      const csvContent = [
+        keys.join(','),
+        ...allSubmissions.map(sub =>
+          keys.map(key => {
+            const value = sub[key] || '';
+            return `"${String(value).replace(/"/g, '""')}"`;
+          }).join(',')
+        )
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `submissions-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      alert('CSV file downloaded successfully');
+    }
+
+    // Delete all data
+    function deleteAllData() {
+      if (confirm('Are you sure? This will delete ALL submissions and patient records. This action cannot be undone.')) {
+        localStorage.removeItem('serviceSubmissions');
+        localStorage.removeItem('patientRecords');
+        allSubmissions = [];
+        loadAllSubmissions();
+        alert('All data has been cleared');
+      }
+    }
+
+    // Logout
+    function logout() {
+      sessionStorage.removeItem('authenticated');
+      document.querySelector('.admin-content').classList.remove('active');
+      document.querySelector('.login-view').classList.add('active');
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+      document.getElementById('search-input').value = '';
+      document.getElementById('patient-id-input').value = '';
+    }
+
+    // Update submission count
+    function updateSubmissionCount(count) {
+      document.getElementById('submission-count').textContent = `Total Submissions: ${count}`;
+    }
+  </script>
+
+</body>
+</html>

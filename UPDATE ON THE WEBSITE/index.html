@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Progress Healthcare and Maternity</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image" href="C:\Users\progress\Pictures\20250406_125043.jpg">
+  <style>
+    /* Role selection modal */
+    .role-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .role-modal {
+      background: #fff;
+      padding: 24px;
+      border-radius: 10px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    .role-modal h3 { margin: 0 0 12px; }
+    .role-actions { display:flex; gap:12px; justify-content:center; margin-top:16px; }
+    .role-actions .btn { padding:10px 16px; border-radius:8px; cursor:pointer; }
+    .role-actions .btn.admin { background:#007bff; color:#fff; border:none; }
+    .role-actions .btn.guest { background:transparent; border:2px solid #007bff; color:#007bff; }
+    .role-password { margin-top:12px; display:none; }
+    .role-password input { width:100%; padding:10px; margin-bottom:8px; box-sizing:border-box; }
+    .role-error { color:#b00020; margin-top:8px; display:none; }
+  </style>
+</head>
+<body>
+  <!-- Background video supplied by user -->
+  <video class="bg-video" autoplay muted loop playsinline>
+    <source src="grok_video_2026-01-31-13-43-59.mp4" type="video/mp4">
+  </video>
+
+  <div class="overlay"></div>
+
+  <!-- Role selection modal (Guest / Admin) -->
+  <div id="role-modal" class="role-modal-backdrop" aria-hidden="false">
+    <div class="role-modal" role="dialog" aria-modal="true" aria-labelledby="role-title">
+      <h3 id="role-title">Continue as</h3>
+      <div id="role-choose">
+        <div class="role-actions">
+          <button class="btn guest" onclick="chooseGuest()">Guest</button>
+          <button class="btn admin" onclick="showAdminPassword()">Admin</button>
+        </div>
+      </div>
+
+      <div id="role-password" class="role-password">
+        <input id="admin-password-input" type="password" placeholder="Enter admin password" aria-label="Admin password" />
+        <div style="display:flex;gap:8px;justify-content:center;">
+          <button class="btn admin" onclick="submitAdminPassword()">Enter</button>
+          <button class="btn guest" onclick="cancelAdmin()">Back</button>
+        </div>
+        <div id="role-error" class="role-error">Incorrect password</div>
+      </div>
+    </div>
+  </div>
+
+  <header class="hero" role="banner">
+    <div class="hero-inner">
+      <h1 class="brand" aria-label="Progress Healthcare and Maternity">Progress Healthcare and Maternity</h1>
+      <p class="tagline">Compassionate care. Modern delivery. Trusted by families.</p>
+      <div class="cta-row">
+        <a class="btn primary" href="services.html">Our Services</a>
+        <a class="btn ghost" href="#contact">Contact Us</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="services" class="section muted">
+      <div class="card">
+        <h2>Care that grows with you</h2>
+        <p>Personalised maternity programs, obstetrics, neonatal care, and innovative women's health services delivered with empathy and excellence.</p>
+      </div>
+    </section>
+
+    <section id="contact" class="section">
+      <div class="card">
+        <h3>Contact</h3>
+        <p>Book an appointment or speak with our care coordinators.</p>
+        <div class="cta-row">
+          <a class="btn primary" href="tel:+2348039287354">Call Us</a>
+          <a class="btn primary" href="https://wa.link/4xnttp" target="_blank">WhatsApp</a>
+          <a class="btn primary" href="https://twitter.com/ProgressIhekwo1" target="_blank">Twitter</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <small>&copy; <span id="year"></span> Progress Healthcare and Maternity — All rights reserved.</small>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+    
+    // Role selection / admin navigation
+    function chooseGuest() {
+      // mark that role chosen so modal won't reappear this session
+      sessionStorage.setItem('roleChosen', 'guest');
+      const modal = document.getElementById('role-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function showAdminPassword() {
+      document.getElementById('role-choose').style.display = 'none';
+      document.getElementById('role-password').style.display = 'block';
+      document.getElementById('admin-password-input').focus();
+    }
+
+    function cancelAdmin() {
+      document.getElementById('role-password').style.display = 'none';
+      document.getElementById('role-choose').style.display = 'block';
+      document.getElementById('role-error').style.display = 'none';
+      document.getElementById('admin-password-input').value = '';
+    }
+
+    function submitAdminPassword() {
+      const pwd = document.getElementById('admin-password-input').value || '';
+      const correct = 'progress124#';
+      const err = document.getElementById('role-error');
+      if (pwd === correct) {
+        // set auth so admin.html opens directly
+        sessionStorage.setItem('adminAuth', 'true');
+        sessionStorage.setItem('adminUser', 'ihekwoaba');
+        // navigate to admin page
+        window.location.href = 'admin.html';
+      } else {
+        if (err) { err.style.display = 'block'; }
+        document.getElementById('admin-password-input').value = '';
+      }
+    }
+
+    // Initialize role modal: hide if guest chosen earlier this session
+    (function initRoleModal(){
+      const modal = document.getElementById('role-modal');
+      if (!modal) return;
+      if (sessionStorage.getItem('roleChosen') === 'guest') {
+        modal.style.display = 'none';
+      } else if (sessionStorage.getItem('adminAuth') === 'true') {
+        // If already authenticated as admin, redirect straight to admin
+        window.location.href = 'admin.html';
+      } else {
+        modal.style.display = 'flex';
+      }
+    })();
+  </script>
+</body>
+</html>

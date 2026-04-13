@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Our Services — Progress Healthcare and Maternity</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image" href="C:\Users\progress\Pictures\20250406_125043.jpg">
+</head>
+<body>
+
+  <header class="hero" role="banner">
+    <div class="hero-inner">
+      <h1 class="brand">Our Services</h1>
+      <p class="tagline">Choose a service to request more information or book care.</p>
+      <div class="cta-row">
+        <a class="btn ghost" href="index.html">Back to Home</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="section muted">
+      <div class="card services-list">
+        <h2>Services</h2>
+        <ul>
+          <li class="service-item"><a class="btn primary" href="service-form.html?service=General%20healthcare">General healthcare</a></li>
+          <li class="service-item"><a class="btn primary" href="service-form.html?service=Personalised%20maternity%20programs">Personalised maternity programs</a></li>
+          <li class="service-item"><a class="btn primary" href="service-form.html?service=Obstetrics">Obstetrics</a></li>
+          <li class="service-item"><a class="btn primary" href="service-form.html?service=Neonatal%20care">Neonatal care</a></li>
+          <li class="service-item"><a class="btn primary" href="service-form.html?service=Innovative%20women's%20health%20services">Innovative women's health services</a></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <small>&copy; <span id="year"></span> Progress Healthcare and Maternity</small>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

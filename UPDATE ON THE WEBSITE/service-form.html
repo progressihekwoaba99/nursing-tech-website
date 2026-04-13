@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Service Request — Progress Healthcare and Maternity</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image" href="C:\Users\progress\Pictures\20250406_125043.jpg">
+  <style>
+    /* Flashcard form styling */
+    .form-container { max-width: 700px; }
+    .flashcard-form {
+      background: white;
+      border-radius: 12px;
+      padding: 36px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      min-height: 420px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .form-step-indicator {
+      font-size: 0.9rem;
+      color: #999;
+      margin-bottom: 16px;
+      font-weight: 500;
+    }
+    .form-step-indicator .step-current {
+      color: #5fb3e6;
+      font-weight: 600;
+    }
+    .form-step {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .form-step.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .form-step label {
+      background: #f9fbfd;
+      padding: 20px;
+      border-radius: 10px;
+      border-left: 4px solid #5fb3e6;
+      transition: all 0.3s ease;
+      display: block;
+      margin-bottom: 16px;
+      font-weight: 500;
+      color: #333;
+    }
+    .form-step label:hover {
+      background: #f0f8ff;
+      box-shadow: 0 4px 12px rgba(95,179,230,0.15);
+    }
+    .form-step label span {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+    .form-step input,
+    .form-step select,
+    .form-step textarea {
+      background: white;
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      font-family: Inter, system-ui;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+    .form-step input:focus,
+    .form-step select:focus,
+    .form-step textarea:focus {
+      outline: none;
+      border-color: #5fb3e6;
+      box-shadow: 0 0 0 3px rgba(95,179,230,0.1);
+    }
+    .form-step textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    .form-step-radio {
+      background: transparent;
+      border: none;
+      padding: 0;
+      margin: 0;
+    }
+    .form-step-radio label {
+      background: transparent;
+      border-left: none;
+      padding: 10px 0;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 400;
+    }
+    .form-step-radio input[type="radio"] {
+      width: auto;
+      border: none;
+      padding: 0;
+    }
+    .form-actions {
+      margin-top: 36px;
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+    }
+    .form-actions button {
+      padding: 12px 24px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 1rem;
+    }
+    .btn-prev {
+      background: #e0e0e0;
+      color: #333;
+    }
+    .btn-prev:hover:not(:disabled) {
+      background: #d0d0d0;
+    }
+    .btn-prev:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-next {
+      background: linear-gradient(180deg, #5fb3e6, #3c9ad1);
+      color: white;
+      margin-left: auto;
+    }
+    .btn-next:hover {
+      background: white;
+      color: #007bff;
+      box-shadow: 0 4px 12px rgba(95,179,230,0.3);
+    }
+    .btn-next.submit {
+      background: linear-gradient(180deg, #28a745, #20c997);
+    }
+    .btn-next.submit:hover {
+      background: white;
+      color: #28a745;
+    }
+    .light-blue-bg .section .card {
+      background: transparent;
+      box-shadow: none;
+    }
+    .light-blue-bg .flashcard-form {
+      background: white;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+    }
+    .summary {
+      background: linear-gradient(135deg, #f0f8ff 0%, #e6f4ff 100%);
+      border: 2px solid #5fb3e6;
+      padding: 24px;
+      border-radius: 12px;
+      margin-top: 24px;
+    }
+    .summary h3 {
+      color: #0b2b3a;
+      margin-top: 0;
+    }
+    .summary p {
+      line-height: 1.8;
+      color: #333;
+    }
+    .word-count {
+      font-size: 0.85rem;
+      color: #999;
+      margin-top: 4px;
+    }
+    .word-count.warning {
+      color: crimson;
+      font-weight: 600;
+    }
+    /* Animated background colors for form page */
+    body {
+      background-color: #0b2b3a;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero" role="banner">
+    <div class="hero-inner">
+      <h1 class="brand">Service Request</h1>
+      <p id="service-sub" class="tagline">Provide your details to request this service.</p>
+      <div class="cta-row">
+        <a class="btn ghost" href="services.html">Back to Services</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="section">
+      <div class="card form-container">
+        <div id="result" class="summary" hidden></div>
+        
+        <form id="serviceForm" class="flashcard-form" novalidate>
+          <div>
+            <div class="form-step-indicator">
+              Step <span class="step-current">1</span> of <span class="step-total">11</span>
+            </div>
+
+            <!-- Step 1: First Name -->
+            <div class="form-step active">
+              <label>
+                <span>What is your first name?</span>
+                <input type="text" name="firstName" id="firstName" placeholder="Enter your first name" required autofocus>
+              </label>
+            </div>
+
+            <!-- Step 2: Surname -->
+            <div class="form-step">
+              <label>
+                <span>What is your surname?</span>
+                <input type="text" name="surname" id="surname" placeholder="Enter your surname" required>
+              </label>
+            </div>
+
+            <!-- Step 3: Phone -->
+            <div class="form-step">
+              <label>
+                <span>What is your phone number?</span>
+                <input type="tel" name="phone" id="phone" placeholder="e.g. +234803..." required>
+              </label>
+            </div>
+
+            <!-- Step 4: Email -->
+            <div class="form-step">
+              <label>
+                <span>What is your email address?</span>
+                <input type="email" name="email" id="email" placeholder="Enter your email" required>
+              </label>
+            </div>
+
+            <!-- Step 5: Location -->
+            <div class="form-step">
+              <label>
+                <span>What is your location?</span>
+                <input type="text" name="location" id="location" placeholder="Your city or address" required>
+              </label>
+            </div>
+
+            <!-- Step 6: Age/DOB -->
+            <div class="form-step">
+              <label>
+                <span>Age or Date of birth (optional)</span>
+                <input type="text" name="age" id="age" placeholder="Age or YYYY-MM-DD">
+              </label>
+            </div>
+
+            <!-- Step 7: Preferred Appointment Date -->
+            <div class="form-step">
+              <label>
+                <span>Preferred appointment date (optional)</span>
+                <input type="date" name="date" id="date">
+              </label>
+            </div>
+
+            <!-- Step 8: Marital Status -->
+            <div class="form-step">
+              <label>
+                <span>What is your marital status?</span>
+                <select name="maritalStatus" id="maritalStatus">
+                  <option value="">-- Select --</option>
+                  <option>Single</option>
+                  <option>Married</option>
+                  <option>Divorced</option>
+                  <option>Widowed</option>
+                  <option>Other</option>
+                </select>
+              </label>
+            </div>
+
+            <!-- Step 9: Health Status -->
+            <div class="form-step">
+              <label>
+                <span>Any existing health conditions, allergies, or medications? (optional)</span>
+                <textarea name="healthStatus" id="healthStatus" placeholder="Brief description of your health status"></textarea>
+              </label>
+            </div>
+
+            <!-- Step 10: Main Complaint -->
+            <div class="form-step">
+              <label>
+                <span>What is your main concern? (max 500 words)</span>
+                <textarea name="complaint" id="complaint" placeholder="Describe your concern" required></textarea>
+                <div class="word-count"><span id="wordCount">0</span>/500 words</div>
+              </label>
+            </div>
+
+            <!-- Step 11: Additional Information -->
+            <div class="form-step">
+              <label>
+                <span>Any additional information? (optional)</span>
+                <textarea name="additional" id="additional" placeholder="Any other details we should know..."></textarea>
+              </label>
+            </div>
+
+            <!-- Step 12: Emergency & Preferences -->
+            <div class="form-step">
+              <div class="form-step-radio">
+                <label>
+                  <span>Is this an emergency?</span>
+                </label>
+                <label>
+                  <input type="radio" name="emergency" value="Yes"> Yes
+                </label>
+                <label>
+                  <input type="radio" name="emergency" value="No" checked> No
+                </label>
+              </div>
+              <div class="form-step-radio" style="margin-top: 24px;">
+                <label>
+                  <span>What is your preferred care type?</span>
+                </label>
+                <label>
+                  <input type="radio" name="carePref" value="Home Care"> Home Care
+                </label>
+                <label>
+                  <input type="radio" name="carePref" value="Hospital Visit" checked> Hospital Visit
+                </label>
+                <label>
+                  <input type="radio" name="carePref" value="Teleconsultation"> Teleconsultation
+                </label>
+              </div>
+            </div>
+            <!-- Step 13: Submission Mode (Text or Voice) -->
+            <div class="form-step">
+              <label>
+                <span>How would you like to submit your message?</span>
+                <div style="display:flex;gap:12px;flex-direction:column;">
+                  <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+                    <button type="button" class="btn-next" onclick="chooseTextMode()">Type message (text)</button>
+                    <button type="button" class="btn-next" style="background:linear-gradient(180deg,#ff7a7a,#ff5252);" onclick="chooseVoiceMode()">Record voice message</button>
+                  </div>
+                  <div id="recorder" style="display:none;margin-top:12px;">
+                    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:8px;flex-wrap:wrap;">
+                      <button type="button" class="btn-secondary" onclick="startRecording()">● Record</button>
+                      <button type="button" class="btn-secondary" onclick="stopRecording()">■ Stop</button>
+                      <button type="button" class="btn-secondary" onclick="playRecording()">▶ Play</button>
+                      <button type="button" class="btn-secondary" onclick="resetRecording()">↺ Re-record</button>
+                    </div>
+                    <div id="recorder-status" style="text-align:center;color:#666;font-size:0.95rem;">No recording yet</div>
+                    <audio id="recorded-audio" controls style="display:block;margin:12px auto;max-width:100%;"></audio>
+                    <a id="download-audio" style="display:block;text-align:center;margin-top:8px;">Download audio</a>
+                  </div>
+                </div>
+              </label>
+              <input type="hidden" name="voiceData" id="voiceData">
+            </div>
+
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-prev" id="prevBtn" disabled onclick="previousStep()">← Previous</button>
+            <button type="button" class="btn-next" id="nextBtn" onclick="nextStep()">Next →</button>
+          </div>
+        </form>
+
+        <div id="errors" class="error" aria-live="polite"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <small>&copy; <span id="year"></span> Progress Healthcare and Maternity</small>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Get service from query string
+    function getQueryParam(name){
+      const params = new URLSearchParams(location.search);
+      return params.get(name);
+    }
+
+    const service = getQueryParam('service') || 'Selected service';
+    document.getElementById('service-sub').textContent = service;
+
+    // ========== PATIENT ID MANAGEMENT ==========
+    let currentPatientId = null;
+    let isReturningPatient = false;
+
+    // Generate next patient ID
+    async function generateNextPatientId() {
+      try {
+        const resp = await fetch('/api/patients');
+        if (resp.ok) {
+          const patients = await resp.json();
+          return `PROG${String(patients.length + 1).padStart(4, '0')}`;
+        }
+      } catch (e) {
+        // Fallback to localStorage
+      }
+      
+      let patients = JSON.parse(localStorage.getItem('patients')) || [];
+      return `PROG${String(patients.length + 1).padStart(4, '0')}`;
+    }
+
+    // Check if patient exists by phone number
+    async function findPatientByPhone(phone) {
+      try {
+        const resp = await fetch(`/api/patients/search?phone=${encodeURIComponent(phone)}`);
+        if (resp.ok) {
+          return await resp.json();
+        }
+      } catch (e) {
+        // Fallback to localStorage
+      }
+
+      let patients = JSON.parse(localStorage.getItem('patients')) || [];
+      return patients.find(p => p.phone === phone) || null;
+    }
+
+    // Save/update patient record
+    async function savePatientRecord(patientData) {
+      try {
+        await fetch('/api/patients', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(patientData)
+        });
+      } catch (e) {
+        // Fall back to localStorage
+      }
+
+      let patients = JSON.parse(localStorage.getItem('patients')) || [];
+      const existingIndex = patients.findIndex(p => p.patientId === patientData.patientId);
+      if (existingIndex >= 0) {
+        patients[existingIndex] = patientData;
+      } else {
+        patients.push(patientData);
+      }
+      localStorage.setItem('patients', JSON.stringify(patients));
+    }
+
+    // Check for returning patient on phone input blur
+    (function() {
+      const phoneInput = document.getElementById('phone');
+      if (phoneInput) {
+        phoneInput.addEventListener('blur', async () => {
+          const phone = phoneInput.value.trim();
+          if (phone) {
+            const patient = await findPatientByPhone(phone);
+            if (patient) {
+              isReturningPatient = true;
+              currentPatientId = patient.patientId;
+              console.log(`Patient ${currentPatientId} found (returning patient)`);
+            }
+          }
+        });
+      }
+    })();
+
+    // Form state
+    let currentStep = 1;
+    const totalSteps = 13;
+    const form = document.getElementById('serviceForm');
+    const steps = document.querySelectorAll('.form-step');
+    const stepCurrent = document.querySelector('.step-current');
+    const stepTotal = document.querySelector('.step-total');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const resultDiv = document.getElementById('result');
+    const errorsDiv = document.getElementById('errors');
+    const complaint = document.getElementById('complaint');
+    const wordCountEl = document.getElementById('wordCount');
+    const MAX_WORDS = 500;
+
+    // Step counter display
+    stepTotal.textContent = totalSteps;
+
+    // Word count for complaint
+    complaint.addEventListener('input', () => {
+      const words = countWords(complaint.value);
+      wordCountEl.textContent = words;
+      const wordCountDiv = wordCountEl.parentElement;
+      if(words > MAX_WORDS) {
+        wordCountDiv.classList.add('warning');
+      } else {
+        wordCountDiv.classList.remove('warning');
+      }
+    });
+
+    function countWords(text){
+      if(!text) return 0;
+      return text.trim().split(/\s+/).filter(Boolean).length;
+    }
+
+    function showStep(step) {
+      steps.forEach((s, idx) => {
+        s.classList.remove('active');
+        if(idx + 1 === step) s.classList.add('active');
+      });
+      
+      stepCurrent.textContent = step;
+      
+      // Update button states
+      if(step === 1) {
+        prevBtn.disabled = true;
+      } else {
+        prevBtn.disabled = false;
+      }
+
+      if(step === totalSteps) {
+        nextBtn.textContent = 'Submit ✓';
+        nextBtn.classList.add('submit');
+      } else {
+        nextBtn.textContent = 'Next →';
+        nextBtn.classList.remove('submit');
+      }
+
+      // Focus on first input in the current step
+      const currentField = steps[step - 1].querySelector('input, select, textarea');
+      if(currentField) {
+        setTimeout(() => currentField.focus(), 100);
+      }
+
+      // Scroll to form
+      form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function validateCurrentStep() {
+      const step = currentStep;
+      let isValid = true;
+      const errorMsgs = [];
+
+      if(step === 1) {
+        const firstName = document.getElementById('firstName').value.trim();
+        if(!firstName) {
+          errorMsgs.push('First name is required.');
+          isValid = false;
+        }
+      } else if(step === 2) {
+        const surname = document.getElementById('surname').value.trim();
+        if(!surname) {
+          errorMsgs.push('Surname is required.');
+          isValid = false;
+        }
+      } else if(step === 3) {
+        const phone = document.getElementById('phone').value.trim();
+        if(!phone) {
+          errorMsgs.push('Phone number is required.');
+          isValid = false;
+        } else if(!/^\+?[0-9]{10,}/.test(phone.replace(/\s|-/g, ''))) {
+          errorMsgs.push('Please enter a valid phone number.');
+          isValid = false;
+        }
+      } else if(step === 4) {
+        const email = document.getElementById('email').value.trim();
+        if(!email) {
+          errorMsgs.push('Email is required.');
+          isValid = false;
+        } else if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          errorMsgs.push('Please enter a valid email address.');
+          isValid = false;
+        }
+      } else if(step === 5) {
+        const location = document.getElementById('location').value.trim();
+        if(!location) {
+          errorMsgs.push('Location is required.');
+          isValid = false;
+        }
+      } else if(step === 10) {
+        const complaintWords = countWords(complaint.value);
+        if(complaintWords > MAX_WORDS) {
+          errorMsgs.push(`Complaint cannot exceed ${MAX_WORDS} words. You have ${complaintWords} words.`);
+          isValid = false;
+        }
+      }
+
+      if(!isValid) {
+        errorsDiv.innerHTML = errorMsgs.map(msg => `<div>✗ ${msg}</div>`).join('');
+      } else {
+        errorsDiv.innerHTML = '';
+      }
+
+      return isValid;
+    }
+
+    function nextStep() {
+      if(!validateCurrentStep()) return;
+
+      errorsDiv.innerHTML = '';
+
+      if(currentStep < totalSteps) {
+        currentStep++;
+        showStep(currentStep);
+      } else if(currentStep === totalSteps) {
+        submitForm();
+      }
+    }
+
+    function previousStep() {
+      errorsDiv.innerHTML = '';
+      if(currentStep > 1) {
+        currentStep--;
+        showStep(currentStep);
+      }
+    }
+
+    function submitForm() {
+      // Final validation
+      const fn = document.getElementById('firstName').value.trim();
+      const sn = document.getElementById('surname').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const location = document.getElementById('location').value.trim();
+      const complaintWords = countWords(complaint.value);
+      const voiceDataVal = (document.getElementById('voiceData') || {}).value || '';
+
+      const errs = [];
+      if(!fn) errs.push('First name is required.');
+      if(!sn) errs.push('Surname is required.');
+      if(!phone) errs.push('Phone is required.');
+      if(!email) errs.push('Email is required.');
+      if(!location) errs.push('Location is required.');
+      if(complaintWords > MAX_WORDS) errs.push('Complaint exceeds maximum word count.');
+
+      // require either a typed complaint or a voice message
+      if(!voiceDataVal && complaintWords === 0) errs.push('Please describe your concern or record a voice message.');
+
+      if(errs.length){
+        errorsDiv.innerHTML = errs.map(x=>`<div>✗ ${x}</div>`).join('');
+        return;
+      }
+
+      // Gather form data
+      const formData = new FormData(form);
+      const obj = {};
+      for(const [k,v] of formData.entries()) obj[k]=v;
+      obj.service = service;
+      obj.timestamp = new Date().toLocaleString();
+
+      // Check if patient exists by email
+      let allPatients = JSON.parse(localStorage.getItem('patientRecords')) || [];
+      let existingPatient = allPatients.find(p => p.email === email || p.phone === phone);
+      
+      if(existingPatient) {
+        // Use existing patient ID
+        obj.patientId = existingPatient.patientId;
+      } else {
+        // Generate new patient ID
+        const nextId = allPatients.length + 1;
+        obj.patientId = 'PROG' + String(nextId).padStart(4, '0');
+        
+        // Create new patient record
+        const newPatient = {
+          patientId: obj.patientId,
+          firstName: fn,
+          surname: sn,
+          phone: phone,
+          email: email,
+          location: location,
+          createdAt: new Date().toLocaleString()
+        };
+        allPatients.push(newPatient);
+        localStorage.setItem('patientRecords', JSON.stringify(allPatients));
+      }
+
+      // decide message type and attach voice data if present
+      if(voiceDataVal) {
+        obj.messageType = 'voice';
+        obj.voiceData = voiceDataVal;
+      } else {
+        obj.messageType = 'text';
+      }
+
+      // Save to submissions
+      let submissions = JSON.parse(localStorage.getItem('serviceSubmissions')) || [];
+      submissions.push(obj);
+      localStorage.setItem('serviceSubmissions', JSON.stringify(submissions));
+
+      // Show success message
+      form.style.display = 'none';
+      errorsDiv.innerHTML = '';
+      resultDiv.hidden = false;
+      resultDiv.innerHTML = `
+        <h3>✓ Request Received!</h3>
+        <p>Thank you, <strong>${obj.firstName} ${obj.surname}</strong>. We received your request for <strong>${obj.service}</strong>.</p>
+        <p><strong>Your Patient ID:</strong> <code style="background:#f0f0f0;padding:4px 8px;border-radius:4px;font-weight:bold;font-size:1.1rem;color:#007bff;">${obj.patientId}</code></p>
+        <p><strong>Phone:</strong> ${obj.phone}<br><strong>Email:</strong> ${obj.email}</p>
+        <p>We will contact you to confirm details and next steps. If this is an emergency, please call your local emergency number immediately.</p>
+        <p><small style="color: #666;">Please save your Patient ID (${obj.patientId}) for future reference. Use it when you contact us. Submission saved at ${obj.timestamp}</small></p>
+        <button class="btn primary" style="margin-top: 16px;" onclick="location.href='services.html'">Back to Services</button>
+      `;
+    }
+
+    // --- Autosave functionality ---
+    // --- Voice recorder functionality ---
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let recordedBlobUrl = null;
+
+    function chooseVoiceMode(){
+      const rec = document.getElementById('recorder');
+      if(rec) rec.style.display = 'block';
+      // advance user to recorder step if not already there
+    }
+
+    function chooseTextMode(){
+      const rec = document.getElementById('recorder');
+      if(rec) rec.style.display = 'none';
+      // remove any existing voice data if switching back to text
+      resetRecording();
+    }
+
+    async function startRecording(){
+      try{
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        recordedChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = e => { if(e.data.size>0) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = async () => {
+          const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+          if(recordedBlobUrl) URL.revokeObjectURL(recordedBlobUrl);
+          recordedBlobUrl = URL.createObjectURL(blob);
+          const audioEl = document.getElementById('recorded-audio');
+          audioEl.src = recordedBlobUrl;
+          audioEl.style.display = 'block';
+          const dl = document.getElementById('download-audio');
+          dl.href = recordedBlobUrl;
+          dl.download = `voice-${Date.now()}.webm`;
+          dl.textContent = 'Download audio';
+          document.getElementById('recorder-status').textContent = 'Recording saved. You can play or download it.';
+
+          // read blob as data URL and store in hidden input
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            document.getElementById('voiceData').value = reader.result;
+          };
+          reader.readAsDataURL(blob);
+        };
+        mediaRecorder.start();
+        document.getElementById('recorder-status').textContent = 'Recording...';
+      } catch(err){
+        alert('Unable to access microphone: ' + (err.message || err));
+      }
+    }
+
+    function stopRecording(){
+      if(mediaRecorder && mediaRecorder.state !== 'inactive'){
+        mediaRecorder.stop();
+      }
+    }
+
+    function playRecording(){
+      const audioEl = document.getElementById('recorded-audio');
+      if(audioEl && audioEl.src){
+        audioEl.play();
+      } else {
+        document.getElementById('recorder-status').textContent = 'No recording to play.';
+      }
+    }
+
+    function resetRecording(){
+      recordedChunks = [];
+      if(recordedBlobUrl) { URL.revokeObjectURL(recordedBlobUrl); recordedBlobUrl = null; }
+      const audioEl = document.getElementById('recorded-audio');
+      if(audioEl){ audioEl.pause(); audioEl.removeAttribute('src'); audioEl.load(); audioEl.style.display = 'none'; }
+      const dl = document.getElementById('download-audio');
+      if(dl){ dl.removeAttribute('href'); dl.textContent = ''; }
+      const vd = document.getElementById('voiceData');
+      if(vd) vd.value = '';
+      document.getElementById('recorder-status').textContent = 'No recording yet';
+    }
+
+    let autosaveTimer = null;
+    const AUTOSAVE_INTERVAL = 8000; // 8s
+
+    function collectFormState(){
+      const data = {};
+      const fm = new FormData(form);
+      for(const [k,v] of fm.entries()) data[k]=v;
+      data.service = service;
+      data.timestamp = new Date().toISOString();
+      return data;
+    }
+
+    function saveDraftLocally(){
+      const payload = collectFormState();
+      localStorage.setItem('serviceDraft_current', JSON.stringify(payload));
+    }
+
+    function scheduleAutosave(){
+      if(autosaveTimer) clearTimeout(autosaveTimer);
+      autosaveTimer = setTimeout(() => {
+        saveDraftLocally();
+      }, AUTOSAVE_INTERVAL);
+    }
+
+    // Attach listeners to autosave on input/change
+    Array.from(form.querySelectorAll('input, textarea, select')).forEach(el => {
+      el.addEventListener('input', scheduleAutosave);
+      el.addEventListener('change', scheduleAutosave);
+      el.addEventListener('blur', saveDraftLocally);
+    });
+
+    // Periodic autosave
+    setInterval(saveDraftLocally, AUTOSAVE_INTERVAL * 3);
+
+    // Attempt to restore draft on load
+    (function tryRestoreDraft(){
+      const local = localStorage.getItem('serviceDraft_current');
+      if(local){
+        try {
+          const draft = JSON.parse(local);
+          for(const k in draft){
+            const el = form.querySelector(`[name="${k}"]`);
+            if(el) el.value = draft[k];
+          }
+        } catch(e) {
+          // Ignore parse errors
+        }
+      }
+    })();
+
+    // Initialize
+    showStep(currentStep);
+
+    // Allow Enter key to go to next step
+    document.addEventListener('keypress', (e) => {
+      if(e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        nextStep();
+      }
+    });
+  </script>
+</body>
+</html>
