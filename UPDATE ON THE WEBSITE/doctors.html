@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor Portal</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      overflow-x: auto;
+      overflow-y: auto;
+    }
+
+    .login-view {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #16a34a 0%, #059669 100%);
+    }
+
+    .login-view.active {
+      display: flex;
+    }
+
+    .login-view:not(.active) {
+      display: none;
+    }
+
+    .login-container {
+      background: white;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-container h2 {
+      margin-bottom: 30px;
+      text-align: center;
+      color: #16a34a;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #16a34a;
+      box-shadow: 0 0 5px rgba(22, 163, 74, 0.1);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: #16a34a;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .btn:hover {
+      background: #13863b;
+    }
+
+    #error-message {
+      color: #d32f2f;
+      margin-top: 15px;
+      text-align: center;
+      display: none;
+      padding: 10px;
+      background: #ffebee;
+      border-radius: 5px;
+    }
+
+    /* Doctor Dashboard Styles */
+    .doctor-content {
+      display: none;
+      min-height: 100vh;
+      background: #f5f5f5;
+    }
+
+    .doctor-content.active {
+      display: block;
+    }
+
+    .header {
+      background: #667eea;
+      color: white;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .header-right {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .doctor-name-display {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 8px 15px;
+      border-radius: 5px;
+      font-weight: 600;
+    }
+
+    .btn-secondary {
+      padding: 10px 15px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+
+    .notification-badge {
+      background: #ff6b6b;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .patients-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .patient-card {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      border-left: 4px solid #16a34a;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .patient-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .patient-card h3 {
+      color: #16a34a;
+      margin-bottom: 8px;
+      font-size: 18px;
+    }
+
+    .patient-badge {
+      display: inline-block;
+      margin-bottom: 14px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #1d4ed8;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .patient-info {
+      font-size: 14px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .patient-info strong {
+      color: #16a34a;
+      min-width: 120px;
+    }
+
+    .patient-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .patient-actions button {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.3s;
+    }
+
+    .btn-view {
+      background: #16a34a;
+      color: white;
+    }
+
+    .btn-view:hover {
+      background: #13863b;
+    }
+
+    .btn-refer {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-refer:hover {
+      background: #218838;
+    }
+
+    /* Modal Styles */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      background: #667eea;
+      color: white;
+      padding: 20px;
+      border-radius: 10px 10px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+    }
+
+    .close-btn {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: none;
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .close-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .vital-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .vital-box {
+      background: #f0f0f0;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+
+    .vital-label {
+      font-size: 12px;
+      color: #999;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .vital-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: #667eea;
+    }
+
+    .referral-form {
+      background: #fafafa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+
+    .referral-form h3 {
+      color: #667eea;
+      margin-bottom: 15px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 5px rgba(102, 126, 234, 0.1);
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .modal-actions .btn-submit {
+      background: #28a745;
+      color: white;
+    }
+
+    .modal-actions .btn-submit:hover {
+      background: #218838;
+    }
+
+    .modal-actions .btn-cancel {
+      background: #ddd;
+      color: #333;
+    }
+
+    .modal-actions .btn-cancel:hover {
+      background: #ccc;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+
+    .empty-state p {
+      margin-bottom: 20px;
+    }
+
+    .success-message {
+      background: #d4edda;
+      color: #155724;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .patients-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+      }
+
+      .header-right {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .vital-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .modal-actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN VIEW -->
+  <div class="login-view active">
+    <div class="login-container">
+      <h2>Doctor Portal</h2>
+      <form onsubmit="handleDoctorLogin(event)">
+        <div class="form-group">
+          <label for="doctor-name">Your Name</label>
+          <select id="doctor-name" required>
+            <option value="">Select your name...</option>
+            <option value="Amina">Dr. Amina</option>
+            <option value="Chinedu">Dr. Chinedu</option>
+            <option value="Esther">Dr. Esther</option>
+            <option value="Michael">Dr. Michael</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="doctor-password">Password</label>
+          <input type="password" id="doctor-password" required>
+        </div>
+        <button type="submit" class="btn">Login</button>
+        <div id="error-message"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- DOCTOR DASHBOARD -->
+  <div class="doctor-content">
+    <!-- Header -->
+    <div class="header">
+      <h1>Doctor Portal</h1>
+      <div class="header-right">
+        <div class="doctor-name-display" id="doctor-welcome">Dr.</div>
+        <button class="btn-secondary" onclick="doctorLogout()">Logout</button>
+      </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+      <div class="success-message" id="success-message"></div>
+
+      <!-- Patients Section -->
+      <div style="margin-bottom: 20px; display: flex; gap: 12px; align-items: center;">
+        <button class="btn-secondary" onclick="searchPatients()" style="background: #f8fafc; padding: 10px 16px; border-radius: 5px; border: 1px solid #cbd5e1; cursor: pointer;">Search Patients</button>
+      </div>
+        <h2 style="margin-bottom: 20px; color: #333;">
+          Your Patients 
+          <span class="notification-badge" id="patient-count">0</span>
+        </h2>
+      </div>
+
+      <div class="patients-grid" id="patients-grid">
+        <div class="empty-state">
+          <p>No patients assigned to you yet.</p>
+          <p style="font-size: 12px; color: #bbb;">Check back after admin assigns patients to your name</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PATIENT DETAILS MODAL -->
+  <div class="modal-backdrop" id="patient-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-patient-name">Patient Details</h2>
+        <button class="close-btn" onclick="closePatientModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Patient Info -->
+        <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+          <div class="patient-info">
+            <strong>Patient ID:</strong>
+            <span id="modal-patient-id">—</span>
+          </div>
+          <div class="patient-info">
+            <strong>Phone:</strong>
+            <span id="modal-patient-phone">—</span>
+          </div>
+          <div class="patient-info">
+            <strong>Email:</strong>
+            <span id="modal-patient-email">—</span>
+          </div>
+          <div class="patient-info">
+            <strong>Age:</strong>
+            <span id="modal-patient-age">—</span>
+          </div>
+          <div class="patient-info">
+            <strong>Location:</strong>
+            <span id="modal-patient-location">—</span>
+          </div>
+          <div class="patient-info">
+            <strong>Marital Status:</strong>
+            <span id="modal-patient-marital">—</span>
+          </div>
+        </div>
+
+        <!-- Vital Signs -->
+        <h3 style="color: #667eea; margin-bottom: 15px; margin-top: 20px;">Vital Signs</h3>
+        <div class="vital-grid" id="vital-signs-grid">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Complaint -->
+        <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; margin-top: 20px;">
+          <h3 style="color: #667eea; margin-bottom: 10px; font-size: 14px;">Patient Complaint</h3>
+          <p id="modal-patient-complaint" style="margin: 0;">—</p>
+        </div>
+
+        <!-- Referral Form -->
+        <div class="referral-form">
+          <h3>Refer This Patient</h3>
+          
+          <div class="form-group">
+            <label for="referral-destination">Refer Patient To:</label>
+            <input type="text" id="referral-destination" placeholder="e.g., Specialist X, Hospital/Department" />
+          </div>
+
+          <div class="form-group checkbox-group">
+            <input type="checkbox" id="is-emergency" />
+            <label for="is-emergency" style="margin: 0; margin-bottom: 0;">Mark as Emergency</label>
+          </div>
+
+          <div class="form-group">
+            <label for="referral-diagnosis">Diagnosis:</label>
+            <textarea id="referral-diagnosis" placeholder="Provide your diagnosis and clinical findings..."></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button class="modal-actions btn-submit" onclick="submitReferral()">Submit Referral</button>
+            <button class="modal-actions btn-cancel" onclick="closePatientModal()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT -->
+  <script>
+    // Configuration
+    const DOCTOR_PASSWORD = 'doctor123#';
+    const vitalLabels = [
+      { key: 'bloodPressure', label: 'Blood Pressure', unit: 'mmHg' },
+      { key: 'sugar', label: 'Sugar', unit: 'mg/dL' },
+      { key: 'pulse', label: 'Pulse', unit: 'bpm' },
+      { key: 'spo2', label: 'SpO2', unit: '%' },
+      { key: 'resp', label: 'Resp', unit: 'breaths/min' },
+      { key: 'temp', label: 'Temp', unit: '°C' }
+    ];
+
+    let currentDoctor = '';
+    let currentPatientId = '';
+    let allPatients = [];
+
+    // Check authentication on page load
+    window.addEventListener('load', initPage);
+
+    function initPage() {
+      if (sessionStorage.getItem('doctorAuth') === 'true') {
+        const doctorName = sessionStorage.getItem('doctorName');
+        if (doctorName) {
+          currentDoctor = doctorName;
+          showDoctorDashboard();
+          loadAssignedPatients();
+        }
+      }
+    }
+
+    // Handle doctor login
+    function handleDoctorLogin(event) {
+      event.preventDefault();
+      const doctorName = document.getElementById('doctor-name').value;
+      const password = document.getElementById('doctor-password').value;
+      const errorEl = document.getElementById('error-message');
+
+      if (doctorName && password === DOCTOR_PASSWORD) {
+        sessionStorage.setItem('doctorAuth', 'true');
+        sessionStorage.setItem('doctorName', doctorName);
+        currentDoctor = doctorName;
+        errorEl.style.display = 'none';
+        showDoctorDashboard();
+        loadAssignedPatients();
+      } else {
+        errorEl.textContent = 'Invalid credentials. Please check your name and password.';
+        errorEl.style.display = 'block';
+        document.getElementById('doctor-password').value = '';
+      }
+    }
+
+    // Show doctor dashboard
+    function showDoctorDashboard() {
+      document.querySelector('.login-view').classList.remove('active');
+      document.querySelector('.doctor-content').classList.add('active');
+      document.getElementById('doctor-welcome').textContent = `Dr. ${currentDoctor}`;
+    }
+
+    // Load patients assigned to this doctor
+    function loadAssignedPatients() {
+      const storedSubs = JSON.parse(localStorage.getItem('serviceSubmissions')) || [];
+      const targetDoctor = `dr. ${currentDoctor}`.trim().toLowerCase();
+      allPatients = storedSubs.filter(sub => {
+        if (!sub.assignedDoctor) return false;
+        const assigned = String(sub.assignedDoctor).trim().toLowerCase();
+        return assigned === targetDoctor || assigned.endsWith(currentDoctor.toLowerCase()) || assigned.includes(currentDoctor.toLowerCase());
+      });
+      displayPatients();
+    }
+
+    // Display patients in grid
+    function displayPatients() {
+      const grid = document.getElementById('patients-grid');
+      document.getElementById('patient-count').textContent = allPatients.length;
+
+      if (allPatients.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1/-1; margin: 40px 0;">
+            <p>No patients assigned to you yet.</p>
+            <p style="font-size: 12px; color: #bbb;">Check back after admin assigns patients to your name</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = allPatients.map(patient => `
+        <div class="patient-card">
+          <h3>${patient.firstName} ${patient.surname}</h3>
+          <div class="patient-badge">Assigned: ${patient.assignedDoctor || 'Unassigned'}</div>
+          <div class="patient-info">
+            <strong>Patient ID:</strong>
+            <span>${patient.patientId || 'N/A'}</span>
+          </div>
+          <div class="patient-info">
+            <strong>Phone:</strong>
+            <span>${patient.phone || 'N/A'}</span>
+          </div>
+          <div class="patient-info">
+            <strong>Location:</strong>
+            <span>${patient.location || 'N/A'}</span>
+          </div>
+          ${patient.vitals && Object.keys(patient.vitals).length > 0 ? `
+            <div class="patient-info" style="margin-top: 10px;">
+              <strong>Latest Vitals:</strong>
+              <span style="background: #e3f2fd; padding: 4px 8px; border-radius: 3px; font-size: 12px;">Updated</span>
+            </div>
+          ` : ''}
+          <div class="patient-actions">
+            <button class="btn-view" onclick="openPatientDetails('${patient.patientId}')">View Details</button>
+            <button class="btn-secondary" onclick="openPatientFolder('${patient.patientId}')" style="background:#4c51bf;border-color:#434190;color:#fff;">Folder</button>
+            <button class="btn-refer" onclick="recommendAdmission('${patient.patientId}')">Recommend Admission</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Open patient details modal
+    function openPatientDetails(patientId, goToReferral = false) {
+      currentPatientId = patientId;
+      const patient = allPatients.find(p => p.patientId === patientId);
+      
+      if (!patient) return;
+
+      // Update patient info
+      document.getElementById('modal-patient-name').textContent = `${patient.firstName} ${patient.surname}`;
+      document.getElementById('modal-patient-id').textContent = patient.patientId || 'N/A';
+      document.getElementById('modal-patient-phone').textContent = patient.phone || 'N/A';
+      document.getElementById('modal-patient-email').textContent = patient.email || 'N/A';
+      document.getElementById('modal-patient-age').textContent = patient.age || 'N/A';
+      document.getElementById('modal-patient-location').textContent = patient.location || 'N/A';
+      document.getElementById('modal-patient-marital').textContent = patient.maritalStatus || 'N/A';
+      document.getElementById('modal-patient-complaint').textContent = patient.complaint || 'No complaint recorded';
+
+      // Display vital signs
+      const vitalGrid = document.getElementById('vital-signs-grid');
+      if (patient.vitals && Object.keys(patient.vitals).length > 0) {
+        vitalGrid.innerHTML = vitalLabels.map(vital => {
+          const value = patient.vitals[vital.key] || 'N/A';
+          return `
+            <div class="vital-box">
+              <div class="vital-label">${vital.label}</div>
+              <div class="vital-value">${value} ${vital.unit}</div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        vitalGrid.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">No vital signs recorded yet</div>';
+      }
+
+      // Pre-fill patient name in referral form
+      document.getElementById('referral-destination').value = '';
+      document.getElementById('is-emergency').checked = false;
+      document.getElementById('referral-diagnosis').value = '';
+
+      // Show modal
+      document.getElementById('patient-modal').classList.add('active');
+
+      // Scroll to referral form if opening to refer
+      if (goToReferral) {
+        setTimeout(() => {
+          document.querySelector('.referral-form').scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    }
+
+    function openPatientFolder(patientId) {
+      if (!patientId) return;
+      window.location.href = `patient-folder.html?id=${encodeURIComponent(patientId)}&role=doctor`;
+    }
+
+    // Close patient modal
+    function closePatientModal() {
+      document.getElementById('patient-modal').classList.remove('active');
+      currentPatientId = '';
+    }
+
+    // Submit referral
+    function submitReferral() {
+      const destination = document.getElementById('referral-destination').value.trim();
+      const isEmergency = document.getElementById('is-emergency').checked;
+      const diagnosis = document.getElementById('referral-diagnosis').value.trim();
+
+      if (!destination) {
+        alert('Please specify where the patient is being referred to.');
+        return;
+      }
+
+      if (!diagnosis) {
+        alert('Please provide a diagnosis.');
+        return;
+      }
+
+      const patient = allPatients.find(p => p.patientId === currentPatientId);
+      if (!patient) return;
+
+      // Create referral record
+      const referral = {
+        referralId: `REF-${Date.now()}`,
+        referralDate: new Date().toLocaleString(),
+        patientId: currentPatientId,
+        patientName: `${patient.firstName} ${patient.surname}`,
+        referredBy: `Dr. ${currentDoctor}`,
+        referredTo: destination,
+        isEmergency: isEmergency,
+        diagnosis: diagnosis,
+        patientPhone: patient.phone,
+        patientEmail: patient.email,
+        patientLocation: patient.location,
+        status: 'pending'
+      };
+
+      // Save referral to localStorage
+      let referrals = JSON.parse(localStorage.getItem('doctorReferrals')) || [];
+      referrals.push(referral);
+      localStorage.setItem('doctorReferrals', JSON.stringify(referrals));
+
+      // Update patient record to mark as referred
+      let storedSubs = JSON.parse(localStorage.getItem('serviceSubmissions')) || [];
+      storedSubs = storedSubs.map(sub => {
+        if (sub.patientId === currentPatientId) {
+          return { ...sub, referralStatus: 'referred', lastReferral: referral };
+        }
+        return sub;
+      });
+      localStorage.setItem('serviceSubmissions', JSON.stringify(storedSubs));
+
+      // Show success message
+      const successMsg = document.getElementById('success-message');
+      successMsg.textContent = `✓ Referral submitted successfully! Reference: ${referral.referralId}`;
+      successMsg.style.display = 'block';
+
+      // Close modal and reset
+      setTimeout(() => {
+        closePatientModal();
+        loadAssignedPatients();
+        successMsg.style.display = 'none';
+      }, 2000);
+    }
+
+    // Admission Recommendation
+    function recommendAdmission(patientId) {
+      const patient = allPatients.find(p => p.patientId === patientId);
+      if (!patient) {
+        alert('Patient not found');
+        return;
+      }
+
+      if (!confirm(`Recommend admission for ${patient.firstName} ${patient.surname}?`)) {
+        return;
+      }
+
+      // Mark patient as having doctor admission recommendation
+      const patients = JSON.parse(localStorage.getItem('patientRecords')) || [];
+      const patientIndex = patients.findIndex(p => p.patientId === patientId);
+      
+      if (patientIndex >= 0) {
+        patients[patientIndex].admissionRecommendedBy = currentDoctor;
+        patients[patientIndex].admissionRecommendedDate = new Date().toLocaleString();
+        patients[patientIndex].admissionSource = 'doctor-recommended';
+        localStorage.setItem('patientRecords', JSON.stringify(patients));
+      }
+
+      alert(`Admission recommendation sent for ${patient.firstName}. Nurse can now process the admission.`);
+      showSuccessMessage('Admission recommendation recorded');
+    }
+
+    // Logout
+    function doctorLogout() {
+      sessionStorage.removeItem('doctorAuth');
+      sessionStorage.removeItem('doctorName');
+      currentDoctor = '';
+      currentPatientId = '';
+      allPatients = [];
+      document.querySelector('.doctor-content').classList.remove('active');
+      document.querySelector('.login-view').classList.add('active');
+      document.getElementById('doctor-name').value = '';
+      document.getElementById('doctor-password').value = '';
+      document.getElementById('error-message').style.display = 'none';
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('patient-modal')?.addEventListener('click', function(e) {
+      if (e.target === this) {
+        closePatientModal();
+      }
+    });
+  </script>
+
+</body>
+</html>

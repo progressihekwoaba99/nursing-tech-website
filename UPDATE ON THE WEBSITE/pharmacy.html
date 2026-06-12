@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Pharmacy Portal</title>
+  <style>
+    *{box-sizing:border-box}
+    body{font-family:Segoe UI, Tahoma, Arial; background:#f7fafc;color:#0f172a;margin:0;}
+    .container{max-width:1200px;margin:28px auto;padding:20px}
+    .login-card{max-width:420px;margin:60px auto;padding:28px;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(2,6,23,.08)}
+    .btn{padding:10px 14px;border-radius:10px;border:none;background:#059669;color:white;font-weight:700;cursor:pointer}
+    .btn-secondary{padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#0f172a;cursor:pointer}
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+    .search{display:flex;gap:8px}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:18px}
+    .catalog{background:white;padding:16px;border-radius:12px;box-shadow:0 8px 30px rgba(2,6,23,.06)}
+    .cart{background:white;padding:16px;border-radius:12px;box-shadow:0 8px 30px rgba(2,6,23,.06)}
+    .category{margin-bottom:12px}
+    .drug-item{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;border:1px solid #eef2f3;margin-bottom:8px}
+    .drug-name{font-weight:700}
+    .pill{background:#ecfdf5;color:#065f46;padding:6px 8px;border-radius:999px;font-weight:700}
+    .table-responsive{overflow:auto}
+    .cart-list{max-height:480px;overflow:auto}
+    .patient-card{background:#fff;padding:12px;border-radius:10px;margin-bottom:12px}
+    input,select{padding:8px;border:1px solid #cbd5e1;border-radius:6px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="login-view" class="login-card">
+      <h2>Pharmacy Login</h2>
+      <form onsubmit="handleLogin(event)">
+        <div style="margin-bottom:12px;"><label>Username</label><input id="pharm-username" required style="width:100%" /></div>
+        <div style="margin-bottom:12px;"><label>Password</label><input id="pharm-password" type="password" required style="width:100%"/></div>
+        <div style="display:flex;gap:8px"><button class="btn">Login</button><button type="button" class="btn-secondary" onclick="location.href='index.html'">Home</button></div>
+        <div id="login-error" style="color:#b91c1c;margin-top:10px;display:none"></div>
+      </form>
+    </div>
+
+    <div id="pharm-panel" style="display:none">
+      <div class="header">
+        <h1>Pharmacy Portal</h1>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div id="pharmacist-name" class="pill">Pharmacist</div>
+          <button class="btn-secondary" onclick="logout()">Logout</button>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+            <input id="patient-search" placeholder="Search patient by name or ID" style="flex:1" onkeyup="filterPatients()" />
+            <button class="btn-secondary" onclick="clearPatientSearch()">Clear</button>
+          </div>
+          <div id="patients-list" style="max-height:220px;overflow:auto;margin-bottom:12px"></div>
+
+          <div class="catalog">
+            <h3>Drug Catalog</h3>
+            <div style="margin-bottom:8px;color:#475569">Click a category to expand; add items to cart with quantity.</div>
+            <div id="drug-categories"></div>
+          </div>
+        </div>
+
+        <div class="cart">
+          <div id="selected-patient" class="patient-card">No patient selected</div>
+          <h3>Cart</h3>
+          <div class="cart-list table-responsive" id="cart-list"></div>
+            <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+              <div style="flex:1">Total: ₦<span id="cart-total">0</span></div>
+              <button class="btn" id="dispense-button" onclick="dispenseToPatient()" disabled>Dispense</button>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <button class="btn-secondary" id="add-all-button" onclick="addAllDrugsToPatient()" disabled>Add All Drugs to Patient</button>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" style="position:fixed;right:20px;bottom:20px;background:#065f46;color:#fff;padding:12px 16px;border-radius:8px;box-shadow:0 6px 20px rgba(2,6,23,0.2);opacity:0;transform:translateY(8px);transition:all 220ms ease;pointer-events:none;z-index:2000"></div>
+
+  <script>
+    const PHARM_USER = 'pharmacy';
+    const PHARM_PASS = 'pharm123#';
+    let pharmacist = '';
+    let patients = [];
+    let selectedPatientId = '';
+    let CART = [];
+
+    const DRUG_CATALOG = [
+      // IV Fluids
+      { id:'ns', name:'Normal Saline 0.9% 1L', category:'IV Fluids', price:2000, consumable:true, units:'1 L' },
+      { id:'ns500', name:'Normal Saline 0.9% 500ml', category:'IV Fluids', price:1200, consumable:true, units:'500 ml' },
+      { id:'rl', name:'Ringer\'s Lactate 1L', category:'IV Fluids', price:2500, consumable:true, units:'1 L' },
+      { id:'d5', name:'Dextrose 5% 500ml', category:'IV Fluids', price:1500, consumable:true, units:'500 ml' },
+
+      // Antibiotics
+      { id:'amox', name:'Amoxicillin 500mg', category:'Antibiotics', price:150, consumable:true, units:'tab' },
+      { id:'ceftriax', name:'Ceftriaxone 1g', category:'Antibiotics', price:1200, consumable:true, units:'amp' },
+      { id:'azith', name:'Azithromycin 500mg', category:'Antibiotics', price:600, consumable:true, units:'tab' },
+      { id:'metro_iv', name:'Metronidazole 500mg IV', category:'Antibiotics', price:400, consumable:true, units:'amp' },
+      { id:'metro_oral', name:'Metronidazole 400mg', category:'Antibiotics', price:150, consumable:true, units:'tab' },
+
+      // Injection Analgesics
+      { id:'morph', name:'Morphine 10mg', category:'Injection Analgesics', price:800, consumable:true, units:'amp' },
+      { id:'tramadol', name:'Tramadol 50mg', category:'Injection Analgesics', price:600, consumable:true, units:'amp' },
+      { id:'pentaz', name:'Pentazocine 30mg', category:'Injection Analgesics', price:700, consumable:true, units:'amp' },
+      { id:'ketorolac', name:'Ketorolac 30mg', category:'Injection Analgesics', price:900, consumable:true, units:'amp' },
+      { id:'diclofenac', name:'Diclofenac 75mg/3ml', category:'Injection Analgesics', price:400, consumable:true, units:'amp' },
+
+      // Analgesics (oral)
+      { id:'parac', name:'Paracetamol 500mg', category:'Analgesics', price:50, consumable:true, units:'tab' },
+      { id:'ibuprofen', name:'Ibuprofen 400mg', category:'Analgesics', price:80, consumable:true, units:'tab' },
+
+      // Antihypertensives
+      { id:'amlod', name:'Amlodipine 5mg', category:'Antihypertensives', price:120, consumable:true, units:'tab' },
+      { id:'lisinopril', name:'Lisinopril 10mg', category:'Antihypertensives', price:140, consumable:true, units:'tab' },
+
+      // Antidiabetics
+      { id:'metformin', name:'Metformin 500mg', category:'Antidiabetics', price:100, consumable:true, units:'tab' },
+      { id:'insulin', name:'Insulin (Short Acting) 10ml', category:'Antidiabetics', price:2500, consumable:true, units:'vial' },
+
+      // Respiratory
+      { id:'salbut', name:'Salbutamol Inhaler 100mcg', category:'Respiratory', price:1200, consumable:true, units:'inh' },
+      { id:'pred', name:'Prednisolone 20mg', category:'Respiratory', price:200, consumable:true, units:'tab' },
+
+      // Consumables
+      { id:'syringe_1ml', name:'Syringe 1ml', category:'Consumables', price:30, consumable:true, units:'pc' },
+      { id:'syringe_2ml', name:'Syringe 2ml', category:'Consumables', price:40, consumable:true, units:'pc' },
+      { id:'syringe_5ml', name:'Syringe 5ml', category:'Consumables', price:50, consumable:true, units:'pc' },
+      { id:'syringe_10ml', name:'Syringe 10ml', category:'Consumables', price:80, consumable:true, units:'pc' },
+      { id:'syringe_20ml', name:'Syringe 20ml', category:'Consumables', price:120, consumable:true, units:'pc' },
+      { id:'ivset', name:'IV Set', category:'Consumables', price:300, consumable:true, units:'pc' },
+      { id:'gauze', name:'Gauze Pack', category:'Consumables', price:100, consumable:true, units:'pc' },
+      { id:'cannula_16g', name:'IV Cannula 16G', category:'Consumables', price:300, consumable:true, units:'pc' },
+      { id:'cannula_18g', name:'IV Cannula 18G', category:'Consumables', price:250, consumable:true, units:'pc' },
+      { id:'cannula_20g', name:'IV Cannula 20G', category:'Consumables', price:200, consumable:true, units:'pc' },
+      { id:'dressing_pack', name:'Dressing Pack', category:'Consumables', price:1000, consumable:true, units:'set' },
+      { id:'oxygen_mask', name:'Oxygen Mask with Tubing', category:'Consumables', price:500, consumable:true, units:'pc' },
+      { id:'ng_tube', name:'Nasogastric Tube', category:'Consumables', price:800, consumable:true, units:'pc' },
+      { id:'foley_catheter', name:'Foley Catheter (Latex)', category:'Consumables', price:1200, consumable:true, units:'pc' },
+
+      // Non-consumables
+      { id:'c-collar', name:'Cervical Collar (Reusable)', category:'Non-Consumables', price:4000, consumable:false, units:'pc' },
+      { id:'walker', name:'Patient Walker (Reusable)', category:'Non-Consumables', price:8000, consumable:false, units:'pc' },
+
+      // Others / Supplements
+      { id:'vitc', name:'Vitamin C 500mg', category:'Supplements', price:80, consumable:true, units:'tab' },
+      { id:'multivit', name:'Multivitamin Syrup', category:'Supplements', price:500, consumable:true, units:'bottle' }
+    ];
+
+    window.addEventListener('load', init);
+
+    function init(){
+      const auth = sessionStorage.getItem('pharmAuth');
+      pharmacist = sessionStorage.getItem('pharmName') || '';
+      if (auth === 'true' && pharmacist) showPanel();
+      renderCatalog();
+    }
+
+    function handleLogin(e){
+      e.preventDefault();
+      const u = document.getElementById('pharm-username').value.trim();
+      const p = document.getElementById('pharm-password').value.trim();
+      const err = document.getElementById('login-error');
+      if (u === PHARM_USER && p === PHARM_PASS){
+        sessionStorage.setItem('pharmAuth','true');
+        sessionStorage.setItem('pharmName', u);
+        pharmacist = u;
+        showPanel();
+      } else {
+        err.textContent = 'Invalid credentials'; err.style.display = 'block';
+      }
+    }
+
+    function showPanel(){
+      document.getElementById('login-view').style.display = 'none';
+      document.getElementById('pharm-panel').style.display = 'block';
+      document.getElementById('pharmacist-name').textContent = pharmacist;
+      patients = JSON.parse(localStorage.getItem('patientRecords')) || [];
+      renderPatients(patients);
+      renderCatalog();
+      renderCart();
+    }
+
+    function logout(){
+      sessionStorage.removeItem('pharmAuth');
+      sessionStorage.removeItem('pharmName');
+      document.getElementById('login-view').style.display = '';
+      document.getElementById('pharm-panel').style.display = 'none';
+    }
+
+    function renderPatients(list){
+      const el = document.getElementById('patients-list');
+      if (!list.length) { el.innerHTML = '<div class="small-note">No patients registered</div>'; return; }
+      el.innerHTML = list.map(p=>`<div style="padding:8px;border-radius:8px;border:1px solid #eef2f3;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center"><div><strong>${p.firstName} ${p.surname}</strong><div class="small-note">${p.patientId} • ${p.phone||''}</div></div><div><button class="btn-secondary" onclick="selectPatient('${p.patientId}')">Select</button><button class="btn-secondary" onclick="openPatientFolder('${p.patientId}')" style="margin-left:6px;">Open Folder</button></div></div>`).join('');
+    }
+
+    function filterPatients(){
+      const q = document.getElementById('patient-search').value.trim().toLowerCase();
+      patients = JSON.parse(localStorage.getItem('patientRecords')) || [];
+      if (!q) return renderPatients(patients);
+      const filtered = patients.filter(p=>`${p.firstName||''} ${p.surname||''}`.toLowerCase().includes(q) || (p.patientId||'').toLowerCase().includes(q));
+      renderPatients(filtered);
+    }
+
+    function clearPatientSearch(){ document.getElementById('patient-search').value=''; renderPatients(JSON.parse(localStorage.getItem('patientRecords'))||[]); }
+
+    function selectPatient(id){ selectedPatientId = id; const p = (JSON.parse(localStorage.getItem('patientRecords'))||[]).find(x=>x.patientId===id); if (!p) return; document.getElementById('selected-patient').innerHTML = `<strong>${p.firstName} ${p.surname}</strong><div class="small-note">${p.patientId} • ${p.phone||''}</div>`; document.getElementById('dispense-button').disabled = false; }
+
+    function openPatientFolder(id){ window.location.href = `patient-folder.html?id=${encodeURIComponent(id)}&role=pharmacy`; }
+
+    function renderCatalog(){
+      const container = document.getElementById('drug-categories');
+      const groups = {};
+      DRUG_CATALOG.forEach(d=>{ groups[d.category]=groups[d.category]||[]; groups[d.category].push(d); });
+      container.innerHTML = Object.keys(groups).map(cat=>{
+        return `<div class="category"><h4>${cat}</h4>${groups[cat].map(d=>`<div class="drug-item"><div><div class="drug-name">${d.name}</div><div class="small-note">${d.units} • ₦${d.price.toLocaleString()}</div></div><div><input type="number" id="q-${d.id}" value="1" min="1" style="width:80px;margin-right:8px"/><button class="btn-secondary" onclick="addToCart('${d.id}')">Add</button></div></div>`).join('')}</div>`;
+      }).join('');
+    }
+
+    function addToCart(id){
+      const drug = DRUG_CATALOG.find(d=>d.id===id);
+      if (!drug) return;
+      const q = parseInt(document.getElementById(`q-${id}`).value || 1,10);
+      const existing = CART.find(c=>c.id===id);
+      if (existing) existing.qty += q; else CART.push({ ...drug, qty: q });
+      renderCart();
+    }
+
+    function renderCart(){
+      const el = document.getElementById('cart-list');
+      if (!CART.length) { el.innerHTML = '<div class="small-note">Cart is empty</div>'; document.getElementById('cart-total').textContent = '0'; document.getElementById('dispense-button').disabled = true; return; }
+      el.innerHTML = CART.map(item=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #f1f5f9"><div><strong>${item.name}</strong><div class="small-note">₦${item.price.toLocaleString()} x ${item.qty}</div></div><div><button class="btn-secondary" onclick="decreaseQty('${item.id}')">-</button><button class="btn-secondary" onclick="increaseQty('${item.id}')">+</button><button class="btn-secondary" style="margin-left:6px" onclick="removeCartItem('${item.id}')">Remove</button></div></div>`).join('');
+      const total = CART.reduce((s,i)=>s + (i.price * i.qty),0);
+      document.getElementById('cart-total').textContent = total.toLocaleString();
+      if (selectedPatientId) document.getElementById('dispense-button').disabled = false;
+      // enable Add All button when a patient is selected
+      document.getElementById('add-all-button').disabled = !selectedPatientId;
+    }
+
+    function increaseQty(id){ const it = CART.find(c=>c.id===id); if (it) { it.qty++; renderCart(); } }
+    function decreaseQty(id){ const it = CART.find(c=>c.id===id); if (it && it.qty>1) { it.qty--; renderCart(); } }
+    function removeCartItem(id){ CART = CART.filter(c=>c.id!==id); renderCart(); }
+
+    function dispenseToPatient(){
+      if (!selectedPatientId) { alert('Select a patient first'); return; }
+      const patientsArr = JSON.parse(localStorage.getItem('patientRecords')) || [];
+      const pIndex = patientsArr.findIndex(p=>p.patientId===selectedPatientId);
+      if (pIndex < 0) { alert('Patient not found in records'); return; }
+      const now = new Date().toLocaleString();
+      const dispensed = CART.map(it => {
+        const catalogItem = DRUG_CATALOG.find(d => d.id === it.id);
+        return { name: it.name, qty: it.qty, price: it.price, date: now, dispensedBy: pharmacist, consumable: !!it.consumable, unit: catalogItem ? catalogItem.units : '-' };
+      });
+      patientsArr[pIndex].medications = (patientsArr[pIndex].medications || []).concat(dispensed);
+      // persist
+      localStorage.setItem('patientRecords', JSON.stringify(patientsArr));
+      // clear cart and update UI
+      CART = [];
+      renderCart();
+      showToast('Dispensed ✓');
+    }
+
+    function addAllDrugsToPatient(){
+      if (!selectedPatientId) { alert('Select a patient first'); return; }
+      const patientsArr = JSON.parse(localStorage.getItem('patientRecords')) || [];
+      const pIndex = patientsArr.findIndex(p=>p.patientId===selectedPatientId);
+      if (pIndex < 0) { alert('Patient not found in records'); return; }
+      const now = new Date().toLocaleString();
+      const allItems = DRUG_CATALOG.map(d => ({ name: d.name, qty: 1, price: d.price, date: now, dispensedBy: pharmacist, consumable: !!d.consumable, unit: d.units }));
+      patientsArr[pIndex].medications = (patientsArr[pIndex].medications || []).concat(allItems);
+      localStorage.setItem('patientRecords', JSON.stringify(patientsArr));
+      showToast('All drugs added to patient');
+    }
+
+    function showToast(message) {
+      const t = document.getElementById('toast');
+      if (!t) { alert(message); return; }
+      t.textContent = message;
+      t.style.opacity = '1';
+      t.style.transform = 'translateY(0)';
+      setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateY(8px)';
+      }, 1800);
+    }
+  </script>
+</body>
+</html>

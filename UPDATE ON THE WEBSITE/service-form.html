@@ -27,7 +27,7 @@
       font-weight: 500;
     }
     .form-step-indicator .step-current {
-      color: #5fb3e6;
+      color: #16a34a;
       font-weight: 600;
     }
     .form-step {
@@ -45,7 +45,7 @@
       background: #f9fbfd;
       padding: 20px;
       border-radius: 10px;
-      border-left: 4px solid #5fb3e6;
+      border-left: 4px solid #16a34a;
       transition: all 0.3s ease;
       display: block;
       margin-bottom: 16px;
@@ -133,14 +133,14 @@
       cursor: not-allowed;
     }
     .btn-next {
-      background: linear-gradient(180deg, #5fb3e6, #3c9ad1);
+      background: linear-gradient(180deg, #16a34a, #13863b);
       color: white;
       margin-left: auto;
     }
     .btn-next:hover {
       background: white;
-      color: #007bff;
-      box-shadow: 0 4px 12px rgba(95,179,230,0.3);
+      color: #16a34a;
+      box-shadow: 0 4px 12px rgba(22,163,74,0.3);
     }
     .btn-next.submit {
       background: linear-gradient(180deg, #28a745, #20c997);
@@ -204,7 +204,7 @@
       <div class="card form-container">
         <div id="result" class="summary" hidden></div>
         
-        <form id="serviceForm" class="flashcard-form" novalidate>
+        <form id="serviceForm" class="flashcard-form" novalidate autocomplete="off">
           <div>
             <div class="form-step-indicator">
               Step <span class="step-current">1</span> of <span class="step-total">11</span>
@@ -682,6 +682,7 @@
       let submissions = JSON.parse(localStorage.getItem('serviceSubmissions')) || [];
       submissions.push(obj);
       localStorage.setItem('serviceSubmissions', JSON.stringify(submissions));
+      localStorage.removeItem('serviceDraft_current');
 
       // Show success message
       form.style.display = 'none';
@@ -811,19 +812,12 @@
     // Periodic autosave
     setInterval(saveDraftLocally, AUTOSAVE_INTERVAL * 3);
 
-    // Attempt to restore draft on load
-    (function tryRestoreDraft(){
-      const local = localStorage.getItem('serviceDraft_current');
-      if(local){
-        try {
-          const draft = JSON.parse(local);
-          for(const k in draft){
-            const el = form.querySelector(`[name="${k}"]`);
-            if(el) el.value = draft[k];
-          }
-        } catch(e) {
-          // Ignore parse errors
-        }
+    // Clear any previously saved draft and reset form fields on initial load.
+    (function clearDraftOnOpen(){
+      localStorage.removeItem('serviceDraft_current');
+      if (form) {
+        form.reset();
+        resetRecording();
       }
     })();
 

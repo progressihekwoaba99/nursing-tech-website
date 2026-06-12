@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nurse Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      overflow-x: auto;
+      overflow-y: auto;
+    }
+
+    .login-view {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #16a34a 0%, #059669 100%);
+    }
+
+    .login-view.active {
+      display: flex;
+    }
+
+    .login-view:not(.active) {
+      display: none;
+    }
+
+    .login-container {
+      background: white;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-container h2 {
+      margin-bottom: 30px;
+      text-align: center;
+      color: #16a34a;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #16a34a;
+      box-shadow: 0 0 5px rgba(22, 163, 74, 0.08);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: #16a34a;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .btn:hover {
+      background: #13863b;
+    }
+
+    #error-message {
+      color: #d32f2f;
+      margin-top: 15px;
+      text-align: center;
+      display: none;
+      padding: 10px;
+      background: #ffebee;
+      border-radius: 5px;
+    }
+
+    .nurse-content {
+      display: none;
+      min-height: 100vh;
+      background: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nurse-content.active {
+      display: flex;
+    }
+
+    .main-wrapper {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 280px;
+      background: white;
+      border-right: 1px solid #e0e0e0;
+      overflow-y: auto;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+    }
+
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 2px solid #16a34a;
+      background: #f8fafc;
+      font-weight: 700;
+      color: #16a34a;
+    }
+
+    .patients-list {
+      list-style: none;
+    }
+
+    .patient-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .patient-item:hover {
+      background: #f8fafc;
+      border-left: 4px solid #16a34a;
+      padding-left: 12px;
+    }
+
+    .patient-item.active {
+      background: #dcfce7;
+      border-left: 4px solid #16a34a;
+      padding-left: 12px;
+    }
+
+    .patient-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #16a34a;
+    }
+
+    .patient-info {
+      flex: 1;
+    }
+
+    .patient-name {
+      font-weight: 600;
+      color: #0f172a;
+      font-size: 13px;
+    }
+
+    .patient-id {
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    .sidebar-empty {
+      padding: 20px 16px;
+      text-align: center;
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .header {
+      background: #16a34a;
+      color: white;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      margin: 0 0 10px 0;
+    }
+
+    .header p {
+      margin: 0;
+      opacity: 0.9;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+      padding: 10px 15px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+
+    .search-box {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .search-box h3 {
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .search-input-group {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .search-input-group input {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    .search-suggestions {
+      list-style: none;
+      margin: 10px 0 0;
+      padding: 0;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background: white;
+      max-height: 220px;
+      overflow-y: auto;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .search-suggestions li {
+      padding: 12px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #f1f1f1;
+    }
+
+    .search-suggestions li:last-child {
+      border-bottom: none;
+    }
+
+    .search-suggestions li:hover {
+      background: #f5f7ff;
+    }
+
+    .stat-box {
+      background: #ecfdf5;
+      padding: 15px;
+      border-radius: 5px;
+      color: #065f46;
+      font-weight: 600;
+      margin-top: 15px;
+    }
+
+    #submissions-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .submission-card {
+      border: 1px solid #eee;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      background: #fafafa;
+    }
+
+    .submission-card h4 {
+      color: #16a34a;
+      margin-bottom: 10px;
+    }
+
+    .submission-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      font-size: 14px;
+    }
+
+    .submission-field {
+      background: white;
+      padding: 10px;
+      border-radius: 3px;
+      border-left: 3px solid #16a34a;
+    }
+
+    .submission-field strong {
+      display: block;
+      color: #16a34a;
+      margin-bottom: 3px;
+      font-size: 12px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
+    .referral-card {
+      border: 1px solid #e8d4f1;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      background: #faf5ff;
+      border-left: 4px solid #a78bfa;
+    }
+
+    .referral-card h4 {
+      color: #16a34a;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .referral-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .referral-badge.emergency {
+      background: #ffc7ce;
+      color: #9c0006;
+    }
+
+    .referral-badge.pending {
+      background: #fff2cc;
+      color: #9c6500;
+    }
+
+    .referral-badge.resolved {
+      background: #c6efce;
+      color: #006100;
+    }
+
+    @media (max-width: 768px) {
+      .search-input-group {
+        grid-template-columns: 1fr;
+      }
+
+      .header-controls {
+        flex-direction: column;
+      }
+
+      .submission-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN VIEW -->
+  <div class="login-view active">
+    <div class="login-container">
+      <h2>Nurse Dashboard</h2>
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" required>
+        </div>
+        <button type="submit" class="btn">Login</button>
+        <div id="error-message"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- NURSE DASHBOARD -->
+  <div class="nurse-content">
+    <!-- Header -->
+    <div class="header">
+      <h1>Nurse Dashboard</h1>
+      <p>Manage Patient Care Plans & Clinical Records</p>
+      <div class="header-controls">
+        <button class="btn-secondary" onclick="showAdmissionModal()" style="background: #16a34a; color: white;">+ Admit Patient</button>
+        <button class="btn-secondary" onclick="showAllPatients()">View All Patients</button>
+        <button class="btn-secondary" onclick="location.href='service-form.html'">New Patient</button>
+        <button class="btn-secondary" onclick="showDoctorReferrals()">Doctor Referrals</button>
+        <button class="btn-secondary" onclick="location.href='medlab.html'">Lab Portal</button>
+        <button class="btn-secondary" onclick="exportToCSV()">Download CSV</button>
+        <button class="btn-secondary" onclick="deleteAllData()">Clear All Data</button>
+        <button class="btn-secondary" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-wrapper">
+      <!-- Sidebar with Patient List -->
+      <div class="sidebar">
+        <div class="sidebar-header">Current Patients</div>
+        <ul class="patients-list" id="patients-sidebar-list"></ul>
+        <div id="sidebar-empty-state" class="sidebar-empty">No admitted patients yet</div>
+      </div>
+
+      <!-- Main Content Area -->
+      <div class="content-area">
+        <div class="container">
+      <!-- Search Section -->
+      <div class="search-box">
+        <h3>Search Submissions</h3>
+        
+        <div>
+          <label>Filter by Name/Email/Phone</label>
+          <div class="search-input-group">
+            <input type="text" id="search-input" placeholder="Enter name, email, or phone..." onkeyup="filterByText()">
+            <button class="btn-secondary" onclick="clearTextSearch()">Clear</button>
+          </div>
+          <ul id="search-suggestions" class="search-suggestions" hidden></ul>
+        </div>
+
+        <div style="margin-top: 20px;">
+          <label>Filter by Patient ID</label>
+          <div class="search-input-group">
+            <input type="text" id="patient-id-input" placeholder="Enter Patient ID..." onkeyup="filterByPatientId()">
+            <button class="btn-secondary" onclick="clearPatientIdSearch()">Clear</button>
+          </div>
+        </div>
+
+        <div class="stat-box">
+          <span id="submission-count">Total Submissions: 0</span>
+        </div>
+      </div>
+
+      <!-- Vitals Update Section -->
+      <div class="search-box" id="vitals-update-section" style="margin-bottom: 24px; background: #f0fdf4; border-left: 4px solid #16a34a;">
+        <h3>Update Patient Vitals</h3>
+        <div>
+          <label>Select Patient</label>
+          <div class="search-input-group">
+            <input type="text" id="vitals-patient-search" placeholder="Search patient by name or ID...">
+            <ul id="vitals-patient-suggestions" class="search-suggestions" hidden></ul>
+          </div>
+          <div id="selected-vitals-patient" style="margin-top: 10px; color: #059669; font-weight: 600;"></div>
+        </div>
+
+        <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px;">
+          <div>
+            <label style="font-weight: 600;">Blood Pressure (mmHg)</label>
+            <input type="text" id="vital-bp" placeholder="120/80" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; margin-top: 6px;">
+          </div>
+          <div>
+            <label style="font-weight: 600;">Pulse (bpm)</label>
+            <input type="number" id="vital-pulse" placeholder="72" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; margin-top: 6px;">
+          </div>
+          <div>
+            <label style="font-weight: 600;">Temperature (°C)</label>
+            <input type="number" id="vital-temp" placeholder="37.0" step="0.1" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; margin-top: 6px;">
+          </div>
+          <div>
+            <label style="font-weight: 600;">SpO2 (%)</label>
+            <input type="number" id="vital-spo2" placeholder="98" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; margin-top: 6px;">
+          </div>
+          <div>
+            <label style="font-weight: 600;">Resp Rate (breaths/min)</label>
+            <input type="number" id="vital-resp" placeholder="16" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; margin-top: 6px;">
+          </div>
+          <div>
+            <label style="font-weight: 600;">Sugar (mg/dL)</label>
+            <input type="number" id="vital-sugar" placeholder="95" step="0.1" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; margin-top: 6px;">
+          </div>
+        </div>
+
+        <div style="margin-top: 16px; display: flex; gap: 12px;">
+          <button class="btn" onclick="saveVitalsUpdate()" style="background: #16a34a;">Save Vitals Update</button>
+          <button class="btn-secondary" onclick="clearVitalsForm()">Clear</button>
+        </div>
+      </div>
+
+      <!-- Submissions Display -->
+      <div id="submissions-container">
+        <div class="empty-state">No submissions found</div>
+      </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMISSION MODAL -->
+  <div id="admission-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 32px; border-radius: 12px; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto;">
+      <h2 style="margin-bottom: 20px; color: #16a34a;">Admit New Patient</h2>
+      <form id="admission-form" onsubmit="processAdmission(event)">
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 6px;">First Name *</label>
+          <input type="text" id="adm-first-name" required style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 6px;">Last Name *</label>
+          <input type="text" id="adm-surname" required style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 6px;">Phone *</label>
+          <input type="tel" id="adm-phone" required style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 6px;">Email</label>
+          <input type="email" id="adm-email" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 6px;">Age *</label>
+          <input type="number" id="adm-age" required min="0" max="150" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 6px;">Reason for Admission *</label>
+          <textarea id="adm-reason" required placeholder="Chief complaint / reason for admission..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; min-height: 80px;"></textarea>
+        </div>
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+          <button type="submit" class="btn" style="flex: 1; background: #16a34a; padding: 12px; border: none; color: white; border-radius: 6px; font-weight: 600; cursor: pointer;">Admit Patient</button>
+          <button type="button" onclick="closeAdmissionModal()" class="btn-secondary" style="flex: 1; padding: 12px; border: 1px solid #cbd5e1; color: #0f172a; border-radius: 6px; font-weight: 600; cursor: pointer;">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT -->
+  <script>
+    // Configuration
+    const CONFIG = {
+      username: 'nurse',
+      password: 'nurse123#'
+    };
+
+    // Doctor assignment options (replace or extend these later)
+    const doctorOptions = [
+      'Dr. Amina',
+      'Dr. Chinedu',
+      'Dr. Esther',
+      'Dr. Michael'
+    ];
+
+    const vitalLabels = [
+      { key: 'bloodPressure', label: 'Blood Pressure', unit: 'mmHg', placeholder: '120/80', type: 'text' },
+      { key: 'sugar', label: 'Sugar', unit: 'mg/dL', placeholder: 'e.g. 95', type: 'number', step: '0.1' },
+      { key: 'pulse', label: 'Pulse', unit: 'bpm', placeholder: 'e.g. 72', type: 'number', step: '1' },
+      { key: 'spo2', label: 'SpO2', unit: '%', placeholder: 'e.g. 98', type: 'number', step: '1' },
+      { key: 'resp', label: 'Resp', unit: 'breaths/min', placeholder: 'e.g. 16', type: 'number', step: '1' },
+      { key: 'temp', label: 'Temp', unit: '°C', placeholder: 'e.g. 37.0', type: 'number', step: '0.1' }
+    ];
+
+    // Global state
+    let allSubmissions = [];
+    let allPatients = [];
+
+    // Check authentication on page load
+    window.addEventListener('load', initPage);
+
+    function initPage() {
+      if (sessionStorage.getItem('authenticated') === 'true') {
+        showNursePanel();
+        loadAllSubmissions();
+      }
+    }
+
+    // Handle login
+    function handleLogin(event) {
+      event.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const errorEl = document.getElementById('error-message');
+
+      if (username === CONFIG.username && password === CONFIG.password) {
+        sessionStorage.setItem('authenticated', 'true');
+        errorEl.style.display = 'none';
+        showNursePanel();
+        loadAllSubmissions();
+      } else {
+        errorEl.textContent = 'Invalid credentials. Please try again.';
+        errorEl.style.display = 'block';
+        document.getElementById('password').value = '';
+      }
+    }
+
+    // Show nurse panel
+    function showNursePanel() {
+      document.querySelector('.login-view').classList.remove('active');
+      document.querySelector('.nurse-content').classList.add('active');
+      initVitalsSearch();
+    }
+
+    // Load all submissions and patient records
+    function loadAllSubmissions() {
+      allSubmissions = JSON.parse(localStorage.getItem('serviceSubmissions')) || [];
+      allPatients = JSON.parse(localStorage.getItem('patientRecords')) || [];
+      displaySubmissions(allSubmissions);
+      updateSubmissionCount(allSubmissions.length);
+      updatePatientSidebar();
+    }
+
+    function updatePatientSidebar() {
+      const sidebarList = document.getElementById('patients-sidebar-list');
+      const emptyState = document.getElementById('sidebar-empty-state');
+      
+      // Get only admitted patients
+      const admittedPatients = allPatients.filter(p => p.admissionStatus === 'admitted');
+      
+      sidebarList.innerHTML = '';
+      
+      if (admittedPatients.length === 0) {
+        emptyState.style.display = 'block';
+        return;
+      }
+      
+      emptyState.style.display = 'none';
+      
+      admittedPatients.forEach(patient => {
+        const li = document.createElement('li');
+        li.className = 'patient-item';
+        li.innerHTML = `
+          <span class="patient-status-dot"></span>
+          <div class="patient-info">
+            <div class="patient-name">${patient.firstName} ${patient.surname}</div>
+            <div class="patient-id">${patient.patientId}</div>
+          </div>
+        `;
+        li.onclick = () => {
+          // Remove active class from all items
+          document.querySelectorAll('.patient-item').forEach(item => item.classList.remove('active'));
+          // Add active class to this item
+          li.classList.add('active');
+          // Open patient folder
+          openPatientFolder(patient.patientId);
+        };
+        sidebarList.appendChild(li);
+      });
+    }
+
+    function openPatientFolder(patientId) {
+      if (!patientId) return;
+      window.location.href = `patient-folder.html?id=${encodeURIComponent(patientId)}&role=nurse`;
+    }
+
+    function selectSearchSuggestion(patientId) {
+      document.getElementById('search-input').value = '';
+      clearSearchSuggestions();
+      openPatientFolder(patientId);
+    }
+
+    function clearSearchSuggestions() {
+      const suggestions = document.getElementById('search-suggestions');
+      if (!suggestions) return;
+      suggestions.innerHTML = '';
+      suggestions.hidden = true;
+    }
+
+    function updateSearchSuggestions(term) {
+      const suggestions = document.getElementById('search-suggestions');
+      if (!suggestions) return;
+      const query = term.trim().toLowerCase();
+      if (!query) {
+        clearSearchSuggestions();
+        return;
+      }
+
+      const matches = allPatients.filter(p => {
+        const fullName = `${p.firstName} ${p.surname}`.toLowerCase();
+        return fullName.includes(query) || (p.email || '').toLowerCase().includes(query) || (p.phone || '').includes(query) || (p.patientId || '').toLowerCase().includes(query);
+      }).slice(0, 6);
+
+      if (matches.length === 0) {
+        suggestions.innerHTML = '<li>No matching patients found.</li>';
+        suggestions.hidden = false;
+        return;
+      }
+
+      suggestions.innerHTML = matches.map(p => `
+        <li onclick="selectSearchSuggestion('${p.patientId}')">
+          <strong>${p.firstName} ${p.surname}</strong> — ${p.patientId}
+        </li>
+      `).join('');
+      suggestions.hidden = false;
+    }
+
+    // Display submissions
+    function displaySubmissions(submissions) {
+      const container = document.getElementById('submissions-container');
+
+      if (submissions.length === 0) {
+        container.innerHTML = '<div class="empty-state">No submissions to display</div>';
+        return;
+      }
+
+      let html = '';
+      submissions.forEach(sub => {
+        // Determine admission type badge
+        let admissionBadge = '';
+        if (sub.admissionSource === 'nurse-direct') {
+          admissionBadge = '<span style="background: #dcfce7; color: #15803d; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; display: inline-block; margin-right: 8px;">Nurse Admission</span>';
+        } else if (sub.admissionSource === 'doctor-recommended') {
+          admissionBadge = '<span style="background: #fef3c7; color: #92400e; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; display: inline-block; margin-right: 8px;">Doctor Recommended</span>';
+        } else if (sub.admissionStatus === 'admitted') {
+          admissionBadge = '<span style="background: #e0e7ff; color: #3730a3; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; display: inline-block; margin-right: 8px;">Admitted</span>';
+        } else {
+          admissionBadge = '<span style="background: #f3f4f6; color: #6b7280; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; display: inline-block; margin-right: 8px;">Guest/Outpatient</span>';
+        }
+
+        html += `
+          <div class="submission-card">
+            <h4>${sub.firstName} ${sub.surname}</h4>
+            <div style="margin-bottom: 12px;">
+              ${admissionBadge}
+            </div>
+            <div class="submission-grid">
+              <div class="submission-field"><strong>Patient ID:</strong> ${sub.patientId || 'N/A'}</div>
+              <div class="submission-field"><strong>Phone:</strong> ${sub.phone || 'N/A'}</div>
+              <div class="submission-field"><strong>Email:</strong> ${sub.email || 'N/A'}</div>
+              <div class="submission-field"><strong>Location:</strong> ${sub.location || 'N/A'}</div>
+              <div class="submission-field"><strong>Age:</strong> ${sub.age || 'N/A'}</div>
+              <div class="submission-field"><strong>Marital Status:</strong> ${sub.maritalStatus || 'N/A'}</div>
+              <div class="submission-field"><strong>Assigned Doctor:</strong> ${sub.assignedDoctor || 'Unassigned'}</div>
+              <div class="submission-field" style="grid-column: span 2;">
+                <strong>Allocate Doctor</strong>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+                  <select id="doctor-select-${sub.patientId}" style="flex:1;min-width:180px;padding:8px;border:1px solid #ccc;border-radius:6px;">
+                    ${doctorOptions.map(doctor => `<option value="${doctor}" ${sub.assignedDoctor === doctor ? 'selected' : ''}>${doctor}</option>`).join('')}
+                  </select>
+                  <button class="btn-secondary" onclick="saveDoctorAssignment('${sub.patientId}')">Save</button>
+                  <button class="btn-secondary" onclick="sendPatientToDoctor('${sub.patientId}')" style="background:#48bb78;border-color:#38a169;color:#fff;">Send to Doctor Portal</button>
+                  <button class="btn-secondary" onclick="openPatientFolder('${sub.patientId}')" style="background:#4c51bf;border-color:#434190;color:#fff;">Patient Folder</button>
+                </div>
+              </div>
+              <div class="submission-field" style="grid-column: span 2;">
+                <strong>Vital Signs</strong>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px;">
+                  ${vitalLabels.map(v => `
+                    <label style="display:flex;flex-direction:column;font-size:0.9rem;">
+                      ${v.label} (${v.unit})
+                      <input id="${v.key}-${sub.patientId}" type="${v.type}" step="${v.step || 'any'}" value="${sub.vitals?.[v.key] || ''}" placeholder="${v.placeholder}" style="padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;box-sizing:border-box;" />
+                    </label>
+                  `).join('')}
+                </div>
+                <button class="btn-secondary" style="margin-top:10px;" onclick="savePatientVitals('${sub.patientId}')">Save Vitals</button>
+              </div>
+              <div class="submission-field"><strong>Complaint:</strong> ${sub.complaint || 'N/A'}</div>
+                ${sub.voiceData ? `<div class="submission-field"><strong>Voice Message:</strong>
+                  <div style="margin-top:6px;"><audio controls src="${sub.voiceData}" style="width:100%;max-width:400px;"></audio>
+                  <div style="margin-top:6px;"><a href="${sub.voiceData}" download="voice-${sub.patientId || 'unknown'}.webm">Download</a></div></div></div>` : ''}
+              <div class="submission-field"><strong>Service:</strong> ${sub.service || 'N/A'}</div>
+              <div class="submission-field"><strong>Date Submitted:</strong> ${sub.date || 'N/A'}</div>
+              <div class="submission-field"><strong>Timestamp:</strong> ${sub.timestamp || 'N/A'}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // Filter by text
+    function filterByText() {
+      const searchTerm = document.getElementById('search-input').value.toLowerCase();
+      updateSearchSuggestions(searchTerm);
+      if (!searchTerm) {
+        loadAllSubmissions();
+        return;
+      }
+
+      const filtered = allSubmissions.filter(sub =>
+        sub.firstName.toLowerCase().includes(searchTerm) ||
+        sub.surname.toLowerCase().includes(searchTerm) ||
+        sub.email.toLowerCase().includes(searchTerm) ||
+        (sub.phone && sub.phone.includes(searchTerm)) ||
+        (sub.patientId && sub.patientId.toLowerCase().includes(searchTerm))
+      );
+
+      displaySubmissions(filtered);
+      updateSubmissionCount(filtered.length);
+    }
+
+    // Clear text search
+    function clearTextSearch() {
+      document.getElementById('search-input').value = '';
+      clearSearchSuggestions();
+      loadAllSubmissions();
+    }
+
+    // Filter by patient ID
+    function filterByPatientId() {
+      const patientId = document.getElementById('patient-id-input').value.toUpperCase().trim();
+      if (!patientId) {
+        loadAllSubmissions();
+        return;
+      }
+
+      const filtered = allSubmissions.filter(sub => sub.patientId === patientId);
+      displaySubmissions(filtered);
+      updateSubmissionCount(filtered.length);
+    }
+
+    // Save doctor assignment for a submission and patient record
+    function saveDoctorAssignment(patientId) {
+      const select = document.getElementById(`doctor-select-${patientId}`);
+      if (!select) return;
+      const selectedDoctor = select.value.trim();
+
+      // update submission(s)
+      let storedSubs = JSON.parse(localStorage.getItem('serviceSubmissions')) || [];
+      storedSubs = storedSubs.map(sub => {
+        if (sub.patientId === patientId) {
+          return { ...sub, assignedDoctor: selectedDoctor, assignmentDate: new Date().toLocaleString() };
+        }
+        return sub;
+      });
+      localStorage.setItem('serviceSubmissions', JSON.stringify(storedSubs));
+
+      // update patient record if exists
+      let patients = JSON.parse(localStorage.getItem('patientRecords')) || [];
+      patients = patients.map(p => {
+        if (p.patientId === patientId) {
+          return { ...p, assignedDoctor: selectedDoctor };
+        }
+        return p;
+      });
+      localStorage.setItem('patientRecords', JSON.stringify(patients));
+
+      // refresh displayed results
+      loadAllSubmissions();
+      alert(`Patient ${patientId} has been assigned to ${selectedDoctor}`);
+    }
+
+    function sendPatientToDoctor(patientId) {
+      const select = document.getElementById(`doctor-select-${patientId}`);
+      if (!select) return;
+      const selectedDoctor = select.value.trim();
+      if (!selectedDoctor) {
+        alert('Please assign a doctor before sending the patient.');
+        return;
+      }
+
+      const vitals = {};
+      vitalLabels.forEach(v => {
+        const input = document.getElementById(`${v.key}-${patientId}`);
+        if (input) {
+          vitals[v.key] = input.value.trim();
+        }
+      });
+
+      const sentAt = new Date().toLocaleString();
+      let storedSubs = JSON.parse(localStorage.getItem('serviceSubmissions')) || [];
+      storedSubs = storedSubs.map(sub => {
+        if (sub.patientId === patientId) {
+          return {
+            ...sub,
+            assignedDoctor: selectedDoctor,
+            assignmentDate: sentAt,
+            vitals,
+            sentToDoctor: true,
+            sentDate: sentAt
+          };
+        }
+        return sub;
+      });
+      localStorage.setItem('serviceSubmissions', JSON.stringify(storedSubs));
+
+      let patients = JSON.parse(localStorage.getItem('patientRecords')) || [];
+      patients = patients.map(p => {
+        if (p.patientId === patientId) {
+          return {
+            ...p,
+            assignedDoctor: selectedDoctor,
+            vitals,
+            sentToDoctor: true,
+            sentDate: sentAt
+          };
+        }
+        return p;
+      });
+      localStorage.setItem('patientRecords', JSON.stringify(patients));
+
+      loadAllSubmissions();
+      alert(`Sent ${patientId} to ${selectedDoctor} with latest vital signs.`);
+    }
+
+    function savePatientVitals(patientId) {
+      const vitals = {};
+      vitalLabels.forEach(v => {
+        const input = document.getElementById(`${v.key}-${patientId}`);
+        if (input) {
+          vitals[v.key] = input.value.trim();
+        }
+      });
+
+      let storedSubs = JSON.parse(localStorage.getItem('serviceSubmissions')) || [];
+      storedSubs = storedSubs.map(sub => {
+        if (sub.patientId === patientId) {
+          return { ...sub, vitals, vitalsUpdated: new Date().toLocaleString() };
+        }
+        return sub;
+      });
+      localStorage.setItem('serviceSubmissions', JSON.stringify(storedSubs));
+
+      let patients = JSON.parse(localStorage.getItem('patientRecords')) || [];
+      patients = patients.map(p => {
+        if (p.patientId === patientId) {
+          return { ...p, vitals };
+        }
+        return p;
+      });
+      localStorage.setItem('patientRecords', JSON.stringify(patients));
+
+      loadAllSubmissions();
+      alert(`Vitals for ${patientId} have been saved.`);
+    }
+
+    // Clear patient ID search
+    function clearPatientIdSearch() {
+      document.getElementById('patient-id-input').value = '';
+      loadAllSubmissions();
+    }
+
+    // Show all patients
+    function showAllPatients() {
+      const allPatients = JSON.parse(localStorage.getItem('patientRecords')) || [];
+
+      if (allPatients.length === 0) {
+        document.getElementById('submissions-container').innerHTML = '<div class="empty-state">No patient records found</div>';
+        return;
+      }
+
+      let html = '<h3 style="margin-bottom: 15px;">All Registered Patients (' + allPatients.length + ')</h3>';
+      html += '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #16a34a; color: white;"><th style="padding: 12px; text-align: left;">Patient ID</th><th style="padding: 12px; text-align: left;">Name</th><th style="padding: 12px; text-align: left;">Phone</th><th style="padding: 12px; text-align: left;">Email</th><th style="padding: 12px; text-align: left;">Location</th><th style="padding: 12px; text-align: left;">Assigned Doctor</th><th style="padding: 12px; text-align: left;">Folder</th></tr></thead><tbody>';
+
+      allPatients.forEach(p => {
+        html += `<tr style="border-bottom: 1px solid #eee; background: #fafafa;"><td style="padding: 12px;">${p.patientId}</td><td style="padding: 12px;">${p.firstName} ${p.surname}</td><td style="padding: 12px;">${p.phone}</td><td style="padding: 12px;">${p.email}</td><td style="padding: 12px;">${p.location}</td><td style="padding: 12px;">${p.assignedDoctor || 'Unassigned'}</td><td style="padding: 12px;"><button class="btn-secondary" onclick="openPatientFolder('${p.patientId}')">Folder</button></td></tr>`;
+      });
+
+      html += '</tbody></table>';
+      document.getElementById('submissions-container').innerHTML = html;
+    }
+
+    // Show doctor referrals
+    function showDoctorReferrals() {
+      const referrals = JSON.parse(localStorage.getItem('doctorReferrals')) || [];
+
+      if (referrals.length === 0) {
+        document.getElementById('submissions-container').innerHTML = '<div class="empty-state">No doctor referrals received yet</div>';
+        return;
+      }
+
+      let html = '<h3 style="margin-bottom: 20px;">Doctor Referrals (' + referrals.length + ')</h3>';
+      
+      referrals.forEach(ref => {
+        const statusClass = ref.isEmergency ? 'emergency' : (ref.status === 'pending' ? 'pending' : 'resolved');
+        const statusText = ref.isEmergency ? 'EMERGENCY' : (ref.status === 'pending' ? 'PENDING' : 'RESOLVED');
+        
+        html += `
+          <div class="referral-card">
+            <h4>
+              ${ref.patientName}
+              <span style="display:flex;gap:8px;align-items:center;">
+                <span class="referral-badge ${statusClass}">${statusText}</span>
+                <small style="color:#999;font-weight:normal;font-size:12px;">${ref.referralId}</small>
+              </span>
+            </h4>
+            <div class="submission-grid">
+              <div class="submission-field"><strong>Patient ID:</strong> ${ref.patientId}</div>
+              <div class="submission-field"><strong>Referred By:</strong> ${ref.referredBy}</div>
+              <div class="submission-field"><strong>Referred To:</strong> ${ref.referredTo}</div>
+              <div class="submission-field"><strong>Phone:</strong> ${ref.patientPhone || 'N/A'}</div>
+              <div class="submission-field"><strong>Email:</strong> ${ref.patientEmail || 'N/A'}</div>
+              <div class="submission-field"><strong>Location:</strong> ${ref.patientLocation || 'N/A'}</div>
+              <div class="submission-field"><strong>Date:</strong> ${ref.referralDate}</div>
+              <div class="submission-field"><strong>Diagnosis:</strong> ${ref.diagnosis}</div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:10px;">
+              <button class="btn-secondary" onclick="markReferralResolved('${ref.referralId}')" ${ref.status !== 'pending' ? 'disabled' : ''} style="flex:1;">
+                ${ref.status === 'pending' ? 'Mark Resolved' : 'Resolved'}
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      document.getElementById('submissions-container').innerHTML = html;
+    }
+
+    // Mark referral as resolved
+    function markReferralResolved(referralId) {
+      let referrals = JSON.parse(localStorage.getItem('doctorReferrals')) || [];
+      referrals = referrals.map(ref => {
+        if (ref.referralId === referralId) {
+          return { ...ref, status: 'resolved', resolvedDate: new Date().toLocaleString() };
+        }
+        return ref;
+      });
+      localStorage.setItem('doctorReferrals', JSON.stringify(referrals));
+      showDoctorReferrals();
+      alert('Referral marked as resolved');
+    }
+
+    // Export to CSV
+    function exportToCSV() {
+      if (allSubmissions.length === 0) {
+        alert('No data to export');
+        return;
+      }
+
+      const keys = Object.keys(allSubmissions[0]);
+      const csvContent = [
+        keys.join(','),
+        ...allSubmissions.map(sub =>
+          keys.map(key => {
+            const value = sub[key] || '';
+            return `"${String(value).replace(/"/g, '""')}"`;
+          }).join(',')
+        )
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `submissions-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      alert('CSV file downloaded successfully');
+    }
+
+    // Delete all data
+    function deleteAllData() {
+      if (confirm('Are you sure? This will delete ALL submissions and patient records. This action cannot be undone.')) {
+        localStorage.removeItem('serviceSubmissions');
+        localStorage.removeItem('patientRecords');
+        allSubmissions = [];
+        loadAllSubmissions();
+        alert('All data has been cleared');
+      }
+    }
+
+    // Vitals Update Functions
+    let selectedVitalsPatientId = null;
+
+    function initVitalsSearch() {
+      const searchInput = document.getElementById('vitals-patient-search');
+      searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        const suggestions = document.getElementById('vitals-patient-suggestions');
+        
+        if (!query) {
+          suggestions.hidden = true;
+          return;
+        }
+
+        const matches = allPatients.filter(p => 
+          (p.firstName && p.firstName.toLowerCase().includes(query)) ||
+          (p.surname && p.surname.toLowerCase().includes(query)) ||
+          (p.patientId && p.patientId.toLowerCase().includes(query))
+        ).slice(0, 10);
+
+        if (matches.length === 0) {
+          suggestions.hidden = true;
+          return;
+        }
+
+        suggestions.innerHTML = matches.map(p => 
+          `<li style="padding:8px;cursor:pointer;" onclick="selectVitalsPatient('${p.patientId}', '${p.firstName} ${p.surname}')">${p.firstName} ${p.surname} (${p.patientId})</li>`
+        ).join('');
+        suggestions.hidden = false;
+      });
+    }
+
+    function selectVitalsPatient(patientId, patientName) {
+      selectedVitalsPatientId = patientId;
+      document.getElementById('vitals-patient-search').value = patientName;
+      document.getElementById('selected-vitals-patient').textContent = `✓ Patient: ${patientName}`;
+      document.getElementById('vitals-patient-suggestions').hidden = true;
+    }
+
+    function saveVitalsUpdate() {
+      if (!selectedVitalsPatientId) {
+        alert('Please select a patient first');
+        return;
+      }
+
+      const patients = JSON.parse(localStorage.getItem('patientRecords')) || [];
+      const patientIndex = patients.findIndex(p => p.patientId === selectedVitalsPatientId);
+      
+      if (patientIndex < 0) {
+        alert('Patient not found');
+        return;
+      }
+
+      const patient = patients[patientIndex];
+      
+      // Get vital values
+      const bp = document.getElementById('vital-bp').value.trim();
+      const pulse = document.getElementById('vital-pulse').value.trim();
+      const temp = document.getElementById('vital-temp').value.trim();
+      const spo2 = document.getElementById('vital-spo2').value.trim();
+      const resp = document.getElementById('vital-resp').value.trim();
+      const sugar = document.getElementById('vital-sugar').value.trim();
+
+      if (!bp && !pulse && !temp && !spo2 && !resp && !sugar) {
+        alert('Please enter at least one vital sign');
+        return;
+      }
+
+      // Initialize if not exists
+      if (!patient.vitals) patient.vitals = {};
+      if (!patient.vitalHistory) patient.vitalHistory = [];
+
+      // Update current vitals
+      if (bp) patient.vitals.bloodPressure = bp;
+      if (pulse) patient.vitals.pulse = pulse;
+      if (temp) patient.vitals.temp = temp;
+      if (spo2) patient.vitals.spo2 = spo2;
+      if (resp) patient.vitals.resp = resp;
+      if (sugar) patient.vitals.sugar = sugar;
+
+      // Add to history
+      const vitalRecord = {
+        datetime: new Date().toLocaleString(),
+        bloodPressure: bp || '',
+        pulse: pulse || '',
+        temp: temp || '',
+        spo2: spo2 || '',
+        resp: resp || '',
+        sugar: sugar || ''
+      };
+      patient.vitalHistory.unshift(vitalRecord);
+
+      // Save back to localStorage
+      patients[patientIndex] = patient;
+      localStorage.setItem('patientRecords', JSON.stringify(patients));
+
+      alert('Vital signs updated successfully!');
+      clearVitalsForm();
+    }
+
+    function clearVitalsForm() {
+      document.getElementById('vitals-patient-search').value = '';
+      document.getElementById('selected-vitals-patient').textContent = '';
+      document.getElementById('vital-bp').value = '';
+      document.getElementById('vital-pulse').value = '';
+      document.getElementById('vital-temp').value = '';
+      document.getElementById('vital-spo2').value = '';
+      document.getElementById('vital-resp').value = '';
+      document.getElementById('vital-sugar').value = '';
+      selectedVitalsPatientId = null;
+    }
+
+    // Admission Modal Functions
+    function showAdmissionModal() {
+      document.getElementById('admission-modal').style.display = 'flex';
+    }
+
+    function closeAdmissionModal() {
+      document.getElementById('admission-modal').style.display = 'none';
+      document.getElementById('admission-form').reset();
+    }
+
+    function processAdmission(event) {
+      event.preventDefault();
+      
+      const firstName = document.getElementById('adm-first-name').value.trim();
+      const surname = document.getElementById('adm-surname').value.trim();
+      const phone = document.getElementById('adm-phone').value.trim();
+      const email = document.getElementById('adm-email').value.trim();
+      const age = document.getElementById('adm-age').value.trim();
+      const reason = document.getElementById('adm-reason').value.trim();
+
+      if (!firstName || !surname || !phone || !age || !reason) {
+        alert('Please fill all required fields');
+        return;
+      }
+
+      // Generate patient ID
+      const patientId = 'P' + Date.now();
+
+      // Create patient record with nurse admission source
+      const newPatient = {
+        patientId: patientId,
+        firstName: firstName,
+        surname: surname,
+        phone: phone,
+        email: email,
+        age: age,
+        location: 'Hospital Admission',
+        maritalStatus: '',
+        admissionSource: 'nurse-direct', // Nurse direct admission
+        admissionStatus: 'admitted',
+        admissionDateTime: new Date().toISOString(),
+        medicalHistory: [reason],
+        carePlan: '',
+        diagnosis: '',
+        prognosis: '',
+        prescriptions: [],
+        vitals: {},
+        vitalHistory: [],
+        labResults: [],
+        medications: [],
+        drugChart: [],
+        profilePhoto: '',
+        dateCreated: new Date().toLocaleString()
+      };
+
+      // Save to localStorage
+      const patients = JSON.parse(localStorage.getItem('patientRecords')) || [];
+      patients.push(newPatient);
+      localStorage.setItem('patientRecords', JSON.stringify(patients));
+
+      alert(`Patient ${firstName} ${surname} (${patientId}) has been admitted successfully!`);
+      closeAdmissionModal();
+      loadAllSubmissions();
+    }
+
+    // Logout
+    function logout() {
+      sessionStorage.removeItem('authenticated');
+      document.querySelector('.nurse-content').classList.remove('active');
+      document.querySelector('.login-view').classList.add('active');
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+      document.getElementById('search-input').value = '';
+      document.getElementById('patient-id-input').value = '';
+    }
+
+    // Update submission count
+    function updateSubmissionCount(count) {
+      document.getElementById('submission-count').textContent = `Total Submissions: ${count}`;
+    }
+  </script>
+
+</body>
+</html>

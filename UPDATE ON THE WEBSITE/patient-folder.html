@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Folder</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eef2ff; color: #1f2937; overflow-x: auto; overflow-y: auto; }
+    .page { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    .header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; }
+    .header h1 { font-size: 28px; color: #1d4ed8; }
+    .header p { color: #475569; }
+    .btn, .btn-secondary { border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: background 0.25s ease; }
+    .btn { background: #2563eb; color: white; padding: 12px 18px; }
+    .btn:hover { background: #1d4ed8; }
+    .btn-secondary { background: #f8fafc; color: #0f172a; padding: 12px 18px; border: 1px solid #cbd5e1; }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .alert { border-radius: 10px; padding: 16px; margin-bottom: 22px; display: none; }
+    .alert.error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .panel { background: white; border-radius: 16px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08); padding: 24px; margin-bottom: 24px; }
+    .grid-2 { display: grid; grid-template-columns: minmax(280px, 1fr) 1.5fr; gap: 24px; }
+    .profile-card { display: flex; flex-direction: column; gap: 16px; }
+    .profile-card img { width: 100%; height: 260px; object-fit: cover; border-radius: 16px; background: #f8fafc; }
+    .profile-small { display:flex; flex-wrap: wrap; gap:12px; }
+    .info-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-bottom: 1px solid #e2e8f0; padding: 10px 0; }
+    .info-row span { color: #64748b; font-size: 14px; }
+    .info-row strong { color: #0f172a; font-size: 14px; }
+    .section { margin-bottom: 24px; }
+    .section h2 { margin-bottom: 14px; font-size: 20px; color: #1d4ed8; }
+    .card-block { display: grid; gap: 18px; }
+    .card-block textarea, .card-block input { width: 100%; border: 1px solid #cbd5e1; border-radius: 10px; padding: 14px; font-size: 14px; color: #0f172a; background: #f8fafc; }
+    .card-block textarea { min-height: 120px; resize: vertical; }
+    .readonly { background: #f8fafc; color: #334155; }
+    .pill { display: inline-flex; padding: 8px 12px; background: #e0f2fe; border-radius: 999px; color: #0c4a6e; font-size: 13px; }
+    .list-box { border: 1px solid #cbd5e1; border-radius: 12px; background: #fff; padding: 18px; }
+    .list-box p { margin-bottom: 10px; font-size: 14px; color: #475569; }
+    .list-box ul { list-style: inside disc; color: #334155; margin-left: 12px; }
+    .flex-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field-row input { min-height: 44px; }
+    .prescription-item, .lab-item { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; margin-bottom: 12px; }
+    .prescription-item input, .lab-item input { width: 100%; min-height: 44px; }
+    .prescription-item button, .lab-item button { width: 54px; height: 44px; background: #f8fafc; border: 1px solid #cbd5e1; color: #475569; }
+    .prescription-item button:hover, .lab-item button:hover { background: #e2e8f0; }
+    .small-note { color: #475569; font-size: 13px; }
+    .profile-actions { display:flex; gap:12px; flex-wrap: wrap; }
+    .photo-upload { display: inline-flex; align-items: center; justify-content:center; width:100%; padding:12px 16px; background:#eef2ff; color:#1d4ed8; border:1px dashed #93c5fd; cursor:pointer; }
+    .photo-upload input { display:none; }
+    .table-responsive { overflow-x:auto; }
+    table { width:100%; border-collapse: collapse; }
+    th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+    th { background: #f8fafc; color: #0f172a; font-weight: 700; }
+    .table-empty { color: #64748b; padding: 14px 0; }
+    .hide { display: none !important; }
+    @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div>
+        <button class="btn-secondary" id="back-button">Back</button>
+        <h1>Patient Folder</h1>
+        <p id="folder-role-label">Role: Nurse</p>
+        <p id="folder-patient-name" class="small-note" style="margin-top: 8px; color: #334155;"></p>
+        <div style="margin-top:12px; display:flex; gap:12px; align-items:center;">
+          <span id="admission-status" class="pill" style="background:#fef3c7;color:#92400e;font-weight:600;">Not Admitted</span>
+          <button class="btn-secondary" id="admit-button" onclick="admitPatient()" style="display:none;padding:8px 14px;font-size:13px;">Mark as Admitted</button>
+          <button class="btn-secondary" id="discharge-button" onclick="dischargePatient()" style="display:none;padding:8px 14px;font-size:13px;background:#fecaca;color:#7f1d1d;">Mark as Discharged</button>
+        </div>
+      </div>
+    </header>
+
+    <div id="error-message" class="alert error"></div>
+
+    <section class="panel grid-2">
+      <div class="profile-card">
+        <div class="profile-small">
+          <img id="folder-photo" src="" alt="Patient Photo" />
+        </div>
+        <div class="profile-actions" id="photo-actions">
+          <label class="photo-upload">
+            Upload Photo
+            <input type="file" id="folder-photo-input" accept="image/*" />
+          </label>
+        </div>
+        <div class="list-box" id="summary-box">
+          <p><strong>Patient ID:</strong> <span id="folder-patient-id"></span></p>
+          <p><strong>Phone:</strong> <span id="folder-patient-phone"></span></p>
+          <p><strong>Email:</strong> <span id="folder-patient-email"></span></p>
+          <p><strong>Location:</strong> <span id="folder-patient-location"></span></p>
+          <p><strong>Age / DOB:</strong> <span id="folder-patient-age"></span></p>
+          <p><strong>Marital Status:</strong> <span id="folder-patient-marital"></span></p>
+        </div>
+      </div>
+      <div class="card-block">
+        <div class="section">
+          <h2>Medical History</h2>
+          <div class="list-box" id="folder-medical-history"></div>
+          <textarea id="new-history-entry" placeholder="Add a new history entry..."></textarea>
+          <div class="flex-row">
+            <button class="btn-secondary" id="add-history-button">Add Entry</button>
+            <span class="small-note">Existing history is non-editable; add new entries below.</span>
+          </div>
+        </div>
+        <div class="section">
+          <h2>Latest Complaint</h2>
+          <textarea id="folder-complaint" class="readonly" readonly></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section">
+        <h2>Care Plan & Management</h2>
+        <textarea id="folder-care-plan" placeholder="Describe the nurse care plan and management actions..."></textarea>
+      </div>
+      <div class="section">
+        <h2>Diagnosis & Prognosis</h2>
+        <textarea id="folder-diagnosis" placeholder="Diagnosis details..."></textarea>
+        <textarea id="folder-prognosis" placeholder="Prognosis and follow-up plan..." style="margin-top: 14px;"></textarea>
+      </div>
+      <div class="section">
+        <h2>Prescriptions</h2>
+        <div id="folder-prescriptions"></div>
+        <button class="btn-secondary" id="add-prescription-button">Add Prescription</button>
+      </div>
+      <div class="section">
+        <h2>Vital Signs & History</h2>
+        <div class="field-row" id="folder-vitals-grid"></div>
+        <div style="margin-top:14px;">
+          <h3 style="font-size:16px;color:#0f172a;margin-bottom:10px;">Vital History</h3>
+          <div class="table-responsive">
+            <table>
+              <thead><tr><th>Date/Time</th><th>BP</th><th>Sugar</th><th>Pulse</th><th>SpO2</th><th>Resp</th><th>Temp</th></tr></thead>
+              <tbody id="vital-history-table"></tbody>
+            </table>
+          </div>
+          <div id="vital-history-empty" class="table-empty">No vital history recorded yet.</div>
+        </div>
+      </div>
+      <div class="section" id="lab-results-section">
+        <h2>Lab Results</h2>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr><th>Test</th><th>Result</th><th>Units</th><th>Reference Range</th><th>Notes</th><th>Date</th></tr>
+            </thead>
+            <tbody id="folder-lab-results"></tbody>
+          </table>
+        </div>
+        <div id="lab-results-empty" class="table-empty">No lab results recorded yet.</div>
+      </div>
+      <div class="section" id="medications-section">
+        <h2>Medications & Billing</h2>
+        <div class="table-responsive">
+          <table>
+            <thead><tr><th>Drug</th><th>Qty</th><th>Unit</th><th>Price (₦)</th><th>Total (₦)</th><th>Given By</th><th>Date</th><th>Action</th></tr></thead>
+            <tbody id="folder-medications"></tbody>
+          </table>
+        </div>
+        <div id="medications-empty" class="table-empty">No medications recorded yet.</div>
+        <div style="margin-top:12px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+          <div>
+            <label>Admission Date/Time</label>
+            <input type="text" id="folder-admission-datetime" readonly style="padding:8px;border-radius:6px;border:1px solid #cbd5e1; width:160px;background:#f8fafc;" />
+          </div>
+          <div style="margin-left:auto;text-align:right;">
+            <div class="small-note">Bed cost per day: ₦3,000 (Real-time calculation)</div>
+            <div><strong>Medications Total: ₦<span id="bill-med-total">0</span></strong></div>
+            <div><strong>Bed Charges: ₦<span id="bill-bed-total">0</span></strong> <span class="small-note" id="hours-admitted"></span></div>
+            <div style="margin-top:6px;"><strong>Total Bill: ₦<span id="bill-overall">0</span></strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="drug-chart-section">
+        <h2>Drug Chart (Nurse)</h2>
+        <div class="table-responsive">
+          <table>
+            <thead><tr><th>Drug</th><th>Dose</th><th>Frequency</th><th>Route</th><th>Start</th><th>End</th><th>Notes</th><th>Action</th></tr></thead>
+            <tbody id="folder-drug-chart"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:12px; display:flex; gap:12px;">
+          <button class="btn-secondary" id="add-drug-chart-row">Add Chart Row</button>
+          <button class="btn" id="save-drug-chart">Save Drug Chart</button>
+        </div>
+      </div>
+      <div class="section hide" id="lab-editor-section">
+        <h2>Lab Result Entry</h2>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr><th>Test</th><th>Result</th><th>Units</th><th>Reference Range</th><th>Notes</th><th></th></tr>
+            </thead>
+            <tbody id="lab-entry-rows"></tbody>
+          </table>
+        </div>
+        <div class="flex-row" style="margin-top:16px;">
+          <button class="btn-secondary" id="add-lab-row">Add Test Row</button>
+          <button class="btn" id="save-labs-button">Save Lab Results</button>
+        </div>
+      </div>
+      <div class="section flex-row" style="justify-content: flex-end; gap: 12px;">
+        <button class="btn" id="save-folder-button">Save Folder Updates</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const patientId = params.get('id');
+    const role = (params.get('role') || 'nurse').toLowerCase();
+    const canEditFolder = role === 'nurse' || role === 'doctor';
+    const canEditLabs = role === 'lab';
+    let currentPatient = null;
+    let allSubmissions = [];
+
+    const vitalLabels = [
+      { key: 'bloodPressure', label: 'Blood Pressure', unit: 'mmHg', placeholder: '120/80' },
+      { key: 'sugar', label: 'Sugar', unit: 'mg/dL', placeholder: 'e.g. 95' },
+      { key: 'pulse', label: 'Pulse', unit: 'bpm', placeholder: 'e.g. 72' },
+      { key: 'spo2', label: 'SpO2', unit: '%', placeholder: 'e.g. 98' },
+      { key: 'resp', label: 'Resp', unit: 'breaths/min', placeholder: 'e.g. 16' },
+      { key: 'temp', label: 'Temp', unit: '°C', placeholder: 'e.g. 37.0' }
+    ];
+
+    window.addEventListener('load', initPage);
+
+    function initPage() {
+      document.getElementById('folder-role-label').textContent = `Role: ${role.charAt(0).toUpperCase() + role.slice(1)}`;
+      document.getElementById('back-button').addEventListener('click', () => {
+        if (role === 'lab') {
+          window.location.href = 'medlab.html';
+          return;
+        }
+        window.history.back();
+      });
+
+      if (!patientId) {
+        showError('No patient selected. Please open this page from the nurse or lab portal.');
+        return;
+      }
+
+      loadPatientData();
+      bindEvents();
+    }
+
+    function bindEvents() {
+      document.getElementById('add-history-button').addEventListener('click', addHistoryEntry);
+      document.getElementById('add-prescription-button').addEventListener('click', addPrescriptionField);
+      document.getElementById('folder-photo-input').addEventListener('change', handlePhotoUpload);
+      if (canEditFolder) {
+        document.getElementById('save-folder-button').addEventListener('click', saveFolderUpdates);
+      } else {
+        document.getElementById('save-folder-button').classList.add('hide');
+      }
+
+      if (canEditLabs) {
+        document.getElementById('lab-editor-section').classList.remove('hide');
+        document.getElementById('add-lab-row').addEventListener('click', addLabRow);
+        document.getElementById('save-labs-button').addEventListener('click', saveLabResults);
+      }
+    }
+
+    function showError(message) {
+      const alertBox = document.getElementById('error-message');
+      alertBox.textContent = message;
+      alertBox.style.display = 'block';
+    }
+
+    function loadPatientData() {
+      const patients = JSON.parse(localStorage.getItem('patientRecords')) || [];
+      allSubmissions = JSON.parse(localStorage.getItem('serviceSubmissions')) || [];
+      currentPatient = patients.find(p => p.patientId === patientId);
+
+      if (!currentPatient) {
+        const submission = allSubmissions.find(s => s.patientId === patientId);
+        if (submission) {
+          currentPatient = {
+            patientId: submission.patientId,
+            firstName: submission.firstName,
+            surname: submission.surname,
+            phone: submission.phone,
+            email: submission.email,
+            location: submission.location,
+            age: submission.age || '',
+            maritalStatus: submission.maritalStatus || '',
+            medicalHistory: [],
+            carePlan: '',
+            diagnosis: '',
+            prognosis: '',
+            prescriptions: [],
+            vitals: submission.vitals || {},
+            labResults: [],
+            profilePhoto: ''
+          };
+        }
+      }
+
+      if (!currentPatient) {
+        showError('Patient record not found.');
+        return;
+      }
+
+      if (!currentPatient.medicalHistory) currentPatient.medicalHistory = [];
+      if (!currentPatient.carePlan) currentPatient.carePlan = '';
+      if (!currentPatient.diagnosis) currentPatient.diagnosis = '';
+      if (!currentPatient.prognosis) currentPatient.prognosis = '';
+      if (!currentPatient.prescriptions) currentPatient.prescriptions = [];
+      if (!currentPatient.medications) currentPatient.medications = [];
+      if (!currentPatient.drugChart) currentPatient.drugChart = [];
+      if (typeof currentPatient.daysAdmitted === 'undefined') currentPatient.daysAdmitted = 0;
+      if (!currentPatient.vitals) currentPatient.vitals = {};
+      if (!currentPatient.labResults) currentPatient.labResults = [];
+      if (!currentPatient.profilePhoto) currentPatient.profilePhoto = '';
+      if (!currentPatient.vitalHistory) currentPatient.vitalHistory = [];
+      if (!currentPatient.admissionStatus) currentPatient.admissionStatus = 'not-admitted';
+      if (!currentPatient.admissionDateTime) currentPatient.admissionDateTime = null;
+
+      renderFolder();
+      updateAdmissionStatusUI();
+    }
+
+    function renderFolder() {
+      const nameLabel = document.getElementById('folder-patient-name');
+      if (nameLabel) {
+        nameLabel.textContent = `${currentPatient.firstName || 'Unknown'} ${currentPatient.surname || ''}`;
+      }
+      document.getElementById('folder-patient-id').textContent = currentPatient.patientId || 'N/A';
+      document.getElementById('folder-patient-phone').textContent = currentPatient.phone || 'N/A';
+      document.getElementById('folder-patient-email').textContent = currentPatient.email || 'N/A';
+      document.getElementById('folder-patient-location').textContent = currentPatient.location || 'N/A';
+      document.getElementById('folder-patient-age').textContent = currentPatient.age || 'N/A';
+      document.getElementById('folder-patient-marital').textContent = currentPatient.maritalStatus || 'N/A';
+
+      const photo = document.getElementById('folder-photo');
+      if (currentPatient.profilePhoto) {
+        photo.src = currentPatient.profilePhoto;
+      } else {
+        photo.src = 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="500" height="300"><rect width="100%" height="100%" fill="%23eef2ff"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%2364768b" font-size="26">No Photo</text></svg>';
+      }
+
+      renderMedicalHistory();
+      document.getElementById('folder-complaint').textContent = getLatestComplaint() || 'No complaint recorded.';
+      document.getElementById('folder-care-plan').value = currentPatient.carePlan || '';
+      document.getElementById('folder-diagnosis').value = currentPatient.diagnosis || '';
+      document.getElementById('folder-prognosis').value = currentPatient.prognosis || '';
+      renderPrescriptions();
+      renderVitals();
+      renderLabResults();
+      renderMedications();
+      document.getElementById('folder-days-admitted').value = currentPatient.daysAdmitted || 0;
+      document.getElementById('recalc-bill').addEventListener('click', () => {
+        currentPatient.daysAdmitted = parseInt(document.getElementById('folder-days-admitted').value || 0, 10);
+        persistPatientRecord();
+        renderBilling();
+      });
+      renderDrugChart();
+      document.getElementById('add-drug-chart-row').addEventListener('click', addDrugChartRow);
+      document.getElementById('save-drug-chart').addEventListener('click', saveDrugChart);
+      if (!canEditFolder) {
+        document.getElementById('folder-care-plan').setAttribute('readonly', 'readonly');
+        document.getElementById('folder-diagnosis').setAttribute('readonly', 'readonly');
+        document.getElementById('folder-prognosis').setAttribute('readonly', 'readonly');
+        document.getElementById('new-history-entry').setAttribute('readonly', 'readonly');
+        document.getElementById('add-history-button').disabled = true;
+        document.getElementById('add-prescription-button').disabled = true;
+      }
+    }
+
+    function getLatestComplaint() {
+      const submission = allSubmissions.filter(s => s.patientId === patientId).sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0))[0];
+      return submission ? submission.complaint || 'No complaint recorded.' : '';
+    }
+
+    function renderMedicalHistory() {
+      const historyContainer = document.getElementById('folder-medical-history');
+      if (!currentPatient.medicalHistory.length) {
+        historyContainer.innerHTML = '<p class="small-note">No medical history has been recorded yet.</p>';
+        return;
+      }
+      historyContainer.innerHTML = `<ul>${currentPatient.medicalHistory.map(entry => `<li>${entry}</li>`).join('')}</ul>`;
+    }
+
+    function renderPrescriptions() {
+      const prescriptionsContainer = document.getElementById('folder-prescriptions');
+      prescriptionsContainer.innerHTML = '';
+      if (!currentPatient.prescriptions.length) {
+        prescriptionsContainer.innerHTML = '<p class="small-note">No prescriptions added yet.</p>';
+      }
+      currentPatient.prescriptions.forEach((prescription, index) => {
+        const item = document.createElement('div');
+        item.className = 'prescription-item';
+        item.innerHTML = `
+          <input type="text" value="${prescription}" placeholder="Prescription details" ${canEditFolder ? '' : 'readonly'} />
+          ${canEditFolder ? '<button type="button" onclick="removePrescription(${index})">✕</button>' : ''}
+        `;
+        prescriptionsContainer.appendChild(item);
+      });
+
+      if (!currentPatient.prescriptions.length && canEditFolder) {
+        addPrescriptionField();
+      }
+    }
+
+    function addPrescriptionField() {
+      if (!canEditFolder) return;
+      const prescriptionsContainer = document.getElementById('folder-prescriptions');
+      const item = document.createElement('div');
+      item.className = 'prescription-item';
+      item.innerHTML = `
+        <input type="text" placeholder="Prescription details" />
+        <button type="button" onclick="removePrescriptionField(this)">✕</button>
+      `;
+      prescriptionsContainer.appendChild(item);
+    }
+
+    function removePrescription(index) {
+      currentPatient.prescriptions.splice(index, 1);
+      renderPrescriptions();
+    }
+
+    function removePrescriptionField(button) {
+      button.closest('.prescription-item').remove();
+    }
+
+    function renderVitals() {
+      const vitalsGrid = document.getElementById('folder-vitals-grid');
+      vitalsGrid.innerHTML = '';
+      vitalLabels.forEach(vital => {
+        const field = document.createElement('label');
+        field.style.display = 'grid';
+        field.style.gap = '8px';
+        field.innerHTML = `
+          <span>${vital.label} (${vital.unit})</span>
+          <input type="text" id="vital-${vital.key}" value="${currentPatient.vitals[vital.key] || ''}" placeholder="${vital.placeholder}" ${canEditFolder ? '' : 'readonly'} />
+        `;
+        vitalsGrid.appendChild(field);
+      });
+      renderVitalHistory();
+    }
+
+    function renderVitalHistory() {
+      const tbody = document.getElementById('vital-history-table');
+      const emptyMsg = document.getElementById('vital-history-empty');
+      tbody.innerHTML = '';
+      
+      if (!currentPatient.vitalHistory || !currentPatient.vitalHistory.length) {
+        emptyMsg.style.display = 'block';
+        return;
+      }
+      
+      emptyMsg.style.display = 'none';
+      currentPatient.vitalHistory.forEach(record => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${record.datetime || ''}</td>
+          <td>${record.bloodPressure || '-'}</td>
+          <td>${record.sugar || '-'}</td>
+          <td>${record.pulse || '-'}</td>
+          <td>${record.spo2 || '-'}</td>
+          <td>${record.resp || '-'}</td>
+          <td>${record.temp || '-'}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function renderLabResults() {
+      const labBody = document.getElementById('folder-lab-results');
+      const emptyMessage = document.getElementById('lab-results-empty');
+      labBody.innerHTML = '';
+      if (!currentPatient.labResults.length) {
+        emptyMessage.style.display = 'block';
+        return;
+      }
+      emptyMessage.style.display = 'none';
+      currentPatient.labResults.forEach(result => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${result.testName}</td>
+          <td>${result.result}</td>
+          <td>${result.units || '-'}</td>
+          <td>${result.referenceRange || '-'}</td>
+          <td>${result.notes || '-'}</td>
+          <td>${result.date || '-'}</td>
+        `;
+        labBody.appendChild(row);
+      });
+    }
+
+    function renderMedications() {
+      const tbody = document.getElementById('folder-medications');
+      const empty = document.getElementById('medications-empty');
+      tbody.innerHTML = '';
+      if (!currentPatient.medications || !currentPatient.medications.length) {
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      const role = new URLSearchParams(window.location.search).get('role') || 'nurse';
+      currentPatient.medications.forEach((m, idx) => {
+        const row = document.createElement('tr');
+        let actionBtn = '';
+        if ((role === 'pharmacy' || role === 'admin') && canEditFolder) {
+          actionBtn = `<button class="btn-secondary" style="padding:6px 10px;font-size:12px;" onclick="removeMedication(${idx})">Remove</button>`;
+        }
+        row.innerHTML = `
+          <td>${m.name}</td>
+          <td>${m.qty}</td>
+          <td>${m.unit || '-'}</td>
+          <td>${m.price.toLocaleString()}</td>
+          <td>${(m.price * m.qty).toLocaleString()}</td>
+          <td>${m.dispensedBy || '-'}</td>
+          <td>${m.date || ''}</td>
+          <td>${actionBtn}</td>
+        `;
+        tbody.appendChild(row);
+      });
+      renderBilling();
+    }
+
+    function renderBilling() {
+      const medTotal = (currentPatient.medications || []).reduce((s, it) => s + ((it.price || 0) * (it.qty || 1)), 0);
+      let bedTotal = 0;
+      let hoursAdmittedText = '';
+      
+      // Calculate real-time bed charges if admitted
+      if (currentPatient.admissionStatus === 'admitted' && currentPatient.admissionDateTime) {
+        const admitTime = new Date(currentPatient.admissionDateTime);
+        const now = new Date();
+        const hoursElapsed = (now - admitTime) / (1000 * 60 * 60);
+        const daysElapsed = Math.ceil(hoursElapsed / 24);
+        bedTotal = daysElapsed * 3000;
+        hoursAdmittedText = `(${Math.floor(hoursElapsed)}h elapsed)`;
+      }
+      
+      document.getElementById('bill-med-total').textContent = medTotal.toLocaleString();
+      document.getElementById('bill-bed-total').textContent = bedTotal.toLocaleString();
+      document.getElementById('hours-admitted').textContent = hoursAdmittedText;
+      document.getElementById('bill-overall').textContent = (medTotal + bedTotal).toLocaleString();
+    }
+
+    function removeMedication(idx) {
+      if (!currentPatient.medications) return;
+      if (!confirm('Remove this medication?')) return;
+      currentPatient.medications.splice(idx, 1);
+      persistPatientRecord();
+      renderMedications();
+    }
+
+    function renderDrugChart() {
+      const tbody = document.getElementById('folder-drug-chart');
+      tbody.innerHTML = '';
+      if (!currentPatient.drugChart || !currentPatient.drugChart.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="table-empty">No drug chart entries yet.</td></tr>';
+        return;
+      }
+      currentPatient.drugChart.forEach((d, idx) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><input value="${d.name || ''}" ${canEditFolder ? '' : 'readonly'} /></td>
+          <td><input value="${d.dose || ''}" ${canEditFolder ? '' : 'readonly'} /></td>
+          <td><input value="${d.frequency || ''}" ${canEditFolder ? '' : 'readonly'} /></td>
+          <td><input value="${d.route || ''}" ${canEditFolder ? '' : 'readonly'} /></td>
+          <td><input type="date" value="${d.start || ''}" ${canEditFolder ? '' : 'readonly'} /></td>
+          <td><input type="date" value="${d.end || ''}" ${canEditFolder ? '' : 'readonly'} /></td>
+          <td><input value="${d.notes || ''}" ${canEditFolder ? '' : 'readonly'} /></td>
+          <td>${canEditFolder ? `<button type="button" onclick="removeDrugChartRow(this)">✕</button>` : ''}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function addDrugChartRow() {
+      if (!canEditFolder) return;
+      const tbody = document.getElementById('folder-drug-chart');
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><input placeholder="Drug name" /></td>
+        <td><input placeholder="Dose" /></td>
+        <td><input placeholder="Frequency" /></td>
+        <td><input placeholder="Route" /></td>
+        <td><input type="date" /></td>
+        <td><input type="date" /></td>
+        <td><input placeholder="Notes" /></td>
+        <td><button type="button" onclick="removeDrugChartRow(this)">✕</button></td>
+      `;
+      tbody.appendChild(row);
+    }
+
+    function removeDrugChartRow(button) {
+      button.closest('tr').remove();
+    }
+
+    function saveDrugChart() {
+      if (!canEditFolder) return;
+      const rows = Array.from(document.querySelectorAll('#folder-drug-chart tr'));
+      currentPatient.drugChart = rows.map(r => {
+        const inputs = r.querySelectorAll('input');
+        return {
+          name: inputs[0]?.value.trim(),
+          dose: inputs[1]?.value.trim(),
+          frequency: inputs[2]?.value.trim(),
+          route: inputs[3]?.value.trim(),
+          start: inputs[4]?.value,
+          end: inputs[5]?.value,
+          notes: inputs[6]?.value.trim()
+        };
+      }).filter(d => d.name);
+      persistPatientRecord();
+      alert('Drug chart saved.');
+    }
+
+
+    function addHistoryEntry() {
+      if (!canEditFolder) return;
+      const textarea = document.getElementById('new-history-entry');
+      const value = textarea.value.trim();
+      if (!value) return;
+      currentPatient.medicalHistory.unshift(`${new Date().toLocaleDateString()}: ${value}`);
+      textarea.value = '';
+      renderMedicalHistory();
+    }
+
+    function saveFolderUpdates() {
+      if (!canEditFolder) return;
+      currentPatient.carePlan = document.getElementById('folder-care-plan').value.trim();
+      currentPatient.diagnosis = document.getElementById('folder-diagnosis').value.trim();
+      currentPatient.prognosis = document.getElementById('folder-prognosis').value.trim();
+
+      const prescriptionItems = Array.from(document.querySelectorAll('#folder-prescriptions .prescription-item input'));
+      currentPatient.prescriptions = prescriptionItems.map(item => item.value.trim()).filter(Boolean);
+
+      // Save vitals and add to history if any vital has changed
+      const oldVitals = JSON.stringify(currentPatient.vitals);
+      currentPatient.vitals = {};
+      vitalLabels.forEach(vital => {
+        currentPatient.vitals[vital.key] = document.getElementById(`vital-${vital.key}`).value.trim();
+      });
+      
+      // If vitals have changed and at least one is filled, add to history
+      const newVitals = JSON.stringify(currentPatient.vitals);
+      if (oldVitals !== newVitals && Object.values(currentPatient.vitals).some(v => v)) {
+        const vitalRecord = {
+          datetime: new Date().toLocaleString(),
+          bloodPressure: currentPatient.vitals.bloodPressure || '',
+          sugar: currentPatient.vitals.sugar || '',
+          pulse: currentPatient.vitals.pulse || '',
+          spo2: currentPatient.vitals.spo2 || '',
+          resp: currentPatient.vitals.resp || '',
+          temp: currentPatient.vitals.temp || ''
+        };
+        if (!currentPatient.vitalHistory) currentPatient.vitalHistory = [];
+        currentPatient.vitalHistory.unshift(vitalRecord);
+      }
+
+      persistPatientRecord();
+      renderVitalHistory();
+      alert('Patient folder updates saved.');
+      renderLabResults();
+    }
+
+    function handlePhotoUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        currentPatient.profilePhoto = e.target.result;
+        document.getElementById('folder-photo').src = currentPatient.profilePhoto;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function addLabRow() {
+      const tbody = document.getElementById('lab-entry-rows');
+      const row = document.createElement('tr');
+      row.className = 'lab-item';
+      row.innerHTML = `
+        <td><input type="text" placeholder="Test name" /></td>
+        <td><input type="text" placeholder="Result" /></td>
+        <td><input type="text" placeholder="Units" /></td>
+        <td><input type="text" placeholder="Reference range" /></td>
+        <td><input type="text" placeholder="Notes" /></td>
+        <td><button type="button" onclick="removeLabRow(this)">✕</button></td>
+      `;
+      tbody.appendChild(row);
+    }
+
+    function removeLabRow(button) {
+      button.closest('tr').remove();
+    }
+
+    function saveLabResults() {
+      if (!canEditLabs) return;
+      const rows = Array.from(document.querySelectorAll('#lab-entry-rows tr'));
+      const newResults = rows.map(row => {
+        const inputs = row.querySelectorAll('input');
+        return {
+          testName: inputs[0].value.trim(),
+          result: inputs[1].value.trim(),
+          units: inputs[2].value.trim(),
+          referenceRange: inputs[3].value.trim(),
+          notes: inputs[4].value.trim(),
+          date: new Date().toLocaleString()
+        };
+      }).filter(r => r.testName && r.result);
+
+      if (!newResults.length) {
+        alert('Please add at least one lab result.');
+        return;
+      }
+
+      currentPatient.labResults = currentPatient.labResults.concat(newResults);
+      persistPatientRecord();
+      document.getElementById('lab-entry-rows').innerHTML = '';
+      renderLabResults();
+      alert('Lab results saved successfully.');
+    }
+
+    function admitPatient() {
+      if (!canEditFolder) return;
+      if (!confirm('Mark this patient as admitted?')) return;
+      currentPatient.admissionStatus = 'admitted';
+      currentPatient.admissionDateTime = new Date().toISOString();
+      persistPatientRecord();
+      updateAdmissionStatusUI();
+      renderBilling();
+      alert('Patient marked as admitted. Real-time bed fee calculation started.');
+      // Refresh billing every minute
+      if (!window.billingRefreshInterval) {
+        window.billingRefreshInterval = setInterval(() => {
+          if (currentPatient.admissionStatus === 'admitted') {
+            renderBilling();
+          }
+        }, 60000);
+      }
+    }
+
+    function dischargePatient() {
+      if (!canEditFolder) return;
+      if (!confirm('Mark this patient as discharged?')) return;
+      currentPatient.admissionStatus = 'discharged';
+      persistPatientRecord();
+      updateAdmissionStatusUI();
+      renderBilling();
+      alert('Patient marked as discharged.');
+      if (window.billingRefreshInterval) {
+        clearInterval(window.billingRefreshInterval);
+        window.billingRefreshInterval = null;
+      }
+    }
+
+    function updateAdmissionStatusUI() {
+      const statusBadge = document.getElementById('admission-status');
+      const admitBtn = document.getElementById('admit-button');
+      const dischargeBtn = document.getElementById('discharge-button');
+      
+      // Only show buttons for nurses
+      if (role !== 'nurse') {
+        admitBtn.style.display = 'none';
+        dischargeBtn.style.display = 'none';
+        return;
+      }
+      
+      if (currentPatient.admissionStatus === 'admitted') {
+        statusBadge.textContent = 'ADMITTED';
+        statusBadge.style.background = '#dcfce7';
+        statusBadge.style.color = '#15803d';
+        admitBtn.style.display = 'none';
+        dischargeBtn.style.display = 'inline-block';
+      } else if (currentPatient.admissionStatus === 'discharged') {
+        statusBadge.textContent = 'DISCHARGED';
+        statusBadge.style.background = '#fecaca';
+        statusBadge.style.color = '#7f1d1d';
+        admitBtn.style.display = 'inline-block';
+        dischargeBtn.style.display = 'none';
+      } else {
+        statusBadge.textContent = 'NOT ADMITTED';
+        statusBadge.style.background = '#fef3c7';
+        statusBadge.style.color = '#92400e';
+        admitBtn.style.display = 'inline-block';
+        dischargeBtn.style.display = 'none';
+      }
+      
+      // Update admission datetime display
+      if (currentPatient.admissionDateTime) {
+        document.getElementById('folder-admission-datetime').value = new Date(currentPatient.admissionDateTime).toLocaleString();
+      }
+    }
+
+    function persistPatientRecord() {
+      const patients = JSON.parse(localStorage.getItem('patientRecords')) || [];
+      const existingIndex = patients.findIndex(p => p.patientId === patientId);
+      if (existingIndex >= 0) {
+        patients[existingIndex] = { ...patients[existingIndex], ...currentPatient };
+      } else {
+        patients.push(currentPatient);
+      }
+      localStorage.setItem('patientRecords', JSON.stringify(patients));
+    }
+  </script>
+</body>
+</html>
